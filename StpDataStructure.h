@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 using namespace std;
 /***
 每种实体都用不同的类，每类都有一个map容器
@@ -234,6 +235,7 @@ public:
     CIRCLE(){}
 };
 
+//数据结构组织容器
 map<int, CLOSED_SHELL> closed_shells;
 map<int, ADVANCED_FACE> advanced_faces;
 map<int, FACE_OUTER_BOUND> face_outer_bounds;
@@ -254,60 +256,25 @@ map<int, VECTOR> vectors;
 map<int, DIRECTION> directions;
 map<int, CIRCLE> circles;
 
-string findIndexType(int index)
-{
-    if(closed_shells.count(index) > 0) {
-        return "closed_shells";
-    }
-    if(advanced_faces.count(index) > 0) {
-        return "advanced_faces";
-    }
-    if(face_outer_bounds.count(index) > 0) {
-        return "face_outer_bounds";
-    }
-    if(face_bounds.count(index) > 0) {
-        return "face_bounds";
-    }
-    if(planes.count(index) > 0) {
-        return "planes";
-    }
-    if(cylindrical_surfaces.count(index) > 0) {
-        return "cylindrical_surfaces";
-    }
-    if(conical_surfaces.count(index) > 0) {
-        return "conical_surfaces";
-    }
-    if(spherical_surfaces.count(index) > 0) {
-        return "spherical_surfaces";
-    }
-    if(toroidal_surfaces.count(index) > 0) {
-        return "toroidal_surfaces";
-    }
-    if(axis2_pacement_3ds.count(index) > 0) {
-        return "axis2_pacement_3ds";
-    }
-    if(edge_loops.count(index) > 0) {
-        return "edge_loops";
-    }
-    if(oriented_edges.count(index) > 0) {
-        return "oriented_edges";
-    }
-    if(edge_curves.count(index) > 0) {
-        return "edge_curves";
-    }
-    if(vertex_points.count(index) > 0) {
-        return "vertex_points";
-    }
-    if(cartesian_points.count(index) > 0) {
-        return "cartesian_points";
-    }
-    if(lines.count(index) > 0) {
-        return "lines";
-    }
-    if(vectors.count(index) > 0) {
-        return "vectors";
-    }
-    if(directions.count(index) > 0) {
-        return "directions";
-    }
-}
+//关键词库查询
+set<string> keywords{
+    "CLOSED_SHELL",
+    "ADVANCED_FACE",
+    "FACE_OUTER_BOUND",
+    "FACE_BOUND",
+    "PLANE",
+    "CYLINDRICAL_SURFACE",
+    "CONICAL_SURFACE",
+    "SPHERICAL_SURFACE",
+    "TOROIDAL_SURFACE",
+    "AXIS2_PLACEMENT_3D",
+    "EDGE_LOOP",
+    "ORIENTED_EDGE",
+    "EDGE_CURVE",
+    "VERTEX_POINT",
+    "CARTESIAN_POINT",
+    "LINE",
+    "VECTOR",
+    "DIRECTION",
+    "CIRCLE"
+};

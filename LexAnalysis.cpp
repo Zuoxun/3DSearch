@@ -135,7 +135,10 @@ int main()
     string filepath;
     while(cin >> filepath)
     {
-        cout << readSTPtoCPP(filepath) << endl;
+        if(readSTPtoCPP(filepath)) {
+            cout << "ReadSTPtoCPP succeeded!" << endl;
+        }
+        else cout << "ReadSTPtoCPP failed!" << endl;
         output();
     }
     return 0;

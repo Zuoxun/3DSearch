@@ -9,6 +9,7 @@
 
 using namespace std;
 
+//从stp读句首索引号
 string readIndex(fstream &f)
 {
     string index;
@@ -22,6 +23,7 @@ string readIndex(fstream &f)
     return index;
 }
 
+//从stp读关键词
 string readKeyword(fstream &f)
 {
     string keyword;
@@ -35,6 +37,7 @@ string readKeyword(fstream &f)
     return keyword;
 }
 
+//从stp读语句内容
 string readContent(fstream &f)
 {
     string content;
@@ -46,6 +49,20 @@ string readContent(fstream &f)
         }
     }
     return content;
+}
+
+//略过stp无效关键词的语句内容
+void ignoreContent(fstream &f)
+{
+    char ch;
+    while(';' != (ch = f.get())) {} //省略到语句结束的';'字符
+}
+
+//判断是不是有效的keyword
+bool isKeyword(string keyword)
+{
+    if(keywords.count(keyword) > 0) return true;
+    else return false;
 }
 
 //将一个用科学计数法表示的浮点数string转换为double
@@ -393,6 +410,7 @@ void instantiation(string index, string keyword, string content)
     }
 }
 
+//读入stp文件并映射至数据结构中
 bool readSTPtoCPP(string filepath)
 {
     fstream f;
@@ -408,13 +426,19 @@ bool readSTPtoCPP(string filepath)
         if(ch == '#') {
             index = readIndex(f);
             keyword = readKeyword(f);
-            content = readContent(f);
-            instantiation(index, keyword, content);
+            if(isKeyword(keyword)) {  //判断是有效关键词就进行映射
+                content = readContent(f);
+                instantiation(index, keyword, content);
+            }
+            else {
+                ignoreContent(f); //无效关键词忽略语句内容
+            }
         }
     }
     return true;
 }
 
+//读取stp文件测试函数
 string readSTP(string filepath)
 {
     fstream f;
@@ -443,4 +467,61 @@ string readSTP(string filepath)
     return s;
 }
 
-
+//查询索引号属于什么类
+string findIndexType(int index)
+{
+    if(closed_shells.count(index) > 0) {
+        return "closed_shells";
+    }
+    if(advanced_faces.count(index) > 0) {
+        return "advanced_faces";
+    }
+    if(face_outer_bounds.count(index) > 0) {
+        return "face_outer_bounds";
+    }
+    if(face_bounds.count(index) > 0) {
+        return "face_bounds";
+    }
+    if(planes.count(index) > 0) {
+        return "planes";
+    }
+    if(cylindrical_surfaces.count(index) > 0) {
+        return "cylindrical_surfaces";
+    }
+    if(conical_surfaces.count(index) > 0) {
+        return "conical_surfaces";
+    }
+    if(spherical_surfaces.count(index) > 0) {
+        return "spherical_surfaces";
+    }
+    if(toroidal_surfaces.count(index) > 0) {
+        return "toroidal_surfaces";
+    }
+    if(axis2_pacement_3ds.count(index) > 0) {
+        return "axis2_pacement_3ds";
+    }
+    if(edge_loops.count(index) > 0) {
+        return "edge_loops";
+    }
+    if(oriented_edges.count(index) > 0) {
+        return "oriented_edges";
+    }
+    if(edge_curves.count(index) > 0) {
+        return "edge_curves";
+    }
+    if(vertex_points.count(index) > 0) {
+        return "vertex_points";
+    }
+    if(cartesian_points.count(index) > 0) {
+        return "cartesian_points";
+    }
+    if(lines.count(index) > 0) {
+        return "lines";
+    }
+    if(vectors.count(index) > 0) {
+        return "vectors";
+    }
+    if(directions.count(index) > 0) {
+        return "directions";
+    }
+}
