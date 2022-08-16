@@ -133,7 +133,7 @@ void output()
 int main()
 {
     string filepath;
-    while(cin >> filepath)
+    while(getline(cin, filepath))
     {
         if(readSTPtoCPP(filepath)) {
             cout << "ReadSTPtoCPP succeeded!" << endl;
