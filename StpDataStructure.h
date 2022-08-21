@@ -1,4 +1,5 @@
 #pragma once
+#pragma execution_character_set("utf-8") //解决中文编码
 #include <iostream>
 #include <string>
 #include <vector>
@@ -29,14 +30,17 @@ public:
     int face;
     bool flag;
 
+    vector<int> adjacentFaces;
+
     ADVANCED_FACE(){}
+    string indexType(int index);
 };
 
 class FACE_OUTER_BOUND
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int loop;
     bool flag;
@@ -48,7 +52,7 @@ class FACE_BOUND
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int loop;
     bool flag;
@@ -60,7 +64,7 @@ class PLANE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
 
@@ -71,7 +75,7 @@ class CYLINDRICAL_SURFACE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
     double radius;
@@ -83,7 +87,7 @@ class CONICAL_SURFACE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
     double radius;
@@ -96,7 +100,7 @@ class SPHERICAL_SURFACE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
     double radius;
@@ -108,7 +112,7 @@ class TOROIDAL_SURFACE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
     double major_radius;
@@ -121,30 +125,32 @@ class AXIS2_PLACEMENT_3D
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int point;
     int directionZ, directionX;
 
     AXIS2_PLACEMENT_3D(){}
+    string indexType(int index);
 };
 
 class EDGE_LOOP
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     vector<int> edges;
 
     EDGE_LOOP(){}
+    string indexType(int index);
 };
 
 class ORIENTED_EDGE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int curve;
     bool flag;
@@ -156,7 +162,7 @@ class EDGE_CURVE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    vector<int> upIndexes; //寻找相邻边的关键点
     string text;
     int vertex1;
     int vertex2;
@@ -164,6 +170,7 @@ public:
     bool flag;
 
     EDGE_CURVE(){}
+    string indexType(int index);
 };
 
 class VERTEX_POINT
@@ -181,18 +188,19 @@ class CARTESIAN_POINT
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     double x, y, z;
 
     CARTESIAN_POINT(){}
+    string indexType(int index);
 };
 
 class LINE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int point;
     int vector;
@@ -204,10 +212,10 @@ class VECTOR
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int direction;
-    double n;
+    double n;  //invalid
 
     VECTOR(){}
 };
@@ -216,18 +224,19 @@ class DIRECTION
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     double x, y, z;
 
     DIRECTION(){}
+    string indexType(int index);
 };
 
 class CIRCLE
 {
 public:
     int index;
-    vector<int> upIndexes;
+    int upIndex;
     string text;
     int axis2;
     double radius;
