@@ -1,5 +1,7 @@
 #include "LexAnalysis.h"
 #include "LexAnalysis.cpp"
+#include "FeatureAnalysis.h"
+#include "FeatureAnalysis.cpp"
 
 int main()
 {
@@ -11,6 +13,7 @@ int main()
             cout << "ReadSTPtoCPP succeeded!" << endl;
             makeIndexTable();
             output();
+            cylinder_and_circularHole();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
     }

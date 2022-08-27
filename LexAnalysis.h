@@ -1,14 +1,9 @@
 #pragma once
-#pragma execution_character_set("utf-8") //解决中文编码
-#include <iostream>
+
 #include <fstream>
 #include <stdlib.h>
-#include <string>
-#include <cstring>
 #include "StpDataStructure.h"
 #include "StpDataStructure.cpp"
-
-using namespace std;
 
 //清空数据结构容器
 void clearData();

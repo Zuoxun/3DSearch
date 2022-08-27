@@ -1,5 +1,5 @@
 #pragma once
-#pragma execution_character_set("utf-8") //解决中文编码
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -46,6 +46,9 @@ public:
     bool flag;
 
     FACE_OUTER_BOUND(){}
+    bool isCIRCLE();
+    bool isCIRCLE(int &circle_index);
+    bool isSingleEdge();
 };
 
 class FACE_BOUND
@@ -58,6 +61,9 @@ public:
     bool flag;
 
     FACE_BOUND(){}
+    bool isCIRCLE();
+    bool isCIRCLE(int &circle_index);
+    bool isSingleEdge();
 };
 
 class PLANE

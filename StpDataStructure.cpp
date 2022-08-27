@@ -12,6 +12,73 @@ string ADVANCED_FACE::indexType(int index)
     return "";
 }
 
+bool FACE_OUTER_BOUND::isCIRCLE()
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        auto oe_it = oriented_edges.find(lp_it->second.edges[0]);
+        auto ec_it = edge_curves.find(oe_it->second.curve);
+        if(ec_it->second.indexType(ec_it->second.edge) == "CIRCLE") return true;
+    }
+    return false;
+}
+
+bool FACE_OUTER_BOUND::isCIRCLE(int &circle_index)
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        auto oe_it = oriented_edges.find(lp_it->second.edges[0]);
+        auto ec_it = edge_curves.find(oe_it->second.curve);
+        if(ec_it->second.indexType(ec_it->second.edge) == "CIRCLE") {
+            circle_index = ec_it->second.edge;
+            return true;
+        }
+    }
+    return false;
+}
+bool FACE_OUTER_BOUND::isSingleEdge()
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        return true;
+    }
+    return false;
+}
+
+bool FACE_BOUND::isCIRCLE()
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        auto oe_it = oriented_edges.find(lp_it->second.edges[0]);
+        auto ec_it = edge_curves.find(oe_it->second.curve);
+        if(ec_it->second.indexType(ec_it->second.edge) == "CIRCLE") return true;
+    }
+    return false;
+}
+
+bool FACE_BOUND::isCIRCLE(int &circle_index)
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        auto oe_it = oriented_edges.find(lp_it->second.edges[0]);
+        auto ec_it = edge_curves.find(oe_it->second.curve);
+        if(ec_it->second.indexType(ec_it->second.edge) == "CIRCLE") {
+            circle_index = ec_it->second.edge;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FACE_BOUND::isSingleEdge()
+{
+    auto lp_it = edge_loops.find(loop);
+    if(lp_it->second.edges.size() == 1) {
+        return true;
+    }
+    return false;
+}
+
 string AXIS2_PLACEMENT_3D::indexType(int index)
 {
     if(circles.find(index) != circles.end()) return "CIRCLE";
