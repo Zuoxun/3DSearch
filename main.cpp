@@ -14,6 +14,7 @@ int main()
             makeIndexTable();
             output();
             cylinder_and_circularHole();
+            cone_and_conicalHole();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
     }

@@ -12,6 +12,7 @@ void clearData()
     spherical_surfaces.clear();
     toroidal_surfaces.clear();
     axis2_pacement_3ds.clear();
+    vertex_loops.clear();
     edge_loops.clear();
     oriented_edges.clear();
     edge_curves.clear();
@@ -123,7 +124,7 @@ void getIndexGroup(vector<int> &indexGroup, string content, int &i)
             while (isNumber(content[i])) {
                 s += content[i++];
             }
-            indexGroup.push_back(atoi(s.c_str()));
+            indexGroup.emplace_back(atoi(s.c_str()));
         }
         else i++;
     }
@@ -170,7 +171,7 @@ void instantiation(string index, string keyword, string content)
 
         closed_shells.emplace(temp.index, temp);
     }
-    if(keyword == "ADVANCED_FACE") {
+    else if(keyword == "ADVANCED_FACE") {
         ADVANCED_FACE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -185,7 +186,7 @@ void instantiation(string index, string keyword, string content)
 
         advanced_faces.emplace(temp.index, temp);
     }
-    if(keyword == "FACE_OUTER_BOUND") {
+    else if(keyword == "FACE_OUTER_BOUND") {
         FACE_OUTER_BOUND temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -198,7 +199,7 @@ void instantiation(string index, string keyword, string content)
 
         face_outer_bounds.emplace(temp.index, temp);
     }
-    if(keyword == "FACE_BOUND") {
+    else if(keyword == "FACE_BOUND") {
         FACE_BOUND temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -211,7 +212,7 @@ void instantiation(string index, string keyword, string content)
 
         face_bounds.emplace(temp.index, temp);
     }
-    if(keyword == "PLANE") {
+    else if(keyword == "PLANE") {
         PLANE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -222,7 +223,7 @@ void instantiation(string index, string keyword, string content)
 
         planes.emplace(temp.index, temp);
     }
-    if(keyword == "CYLINDRICAL_SURFACE") {
+    else if(keyword == "CYLINDRICAL_SURFACE") {
         CYLINDRICAL_SURFACE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -235,7 +236,7 @@ void instantiation(string index, string keyword, string content)
 
         cylindrical_surfaces.emplace(temp.index, temp);
     }
-    if(keyword == "CONICAL_SURFACE") {
+    else if(keyword == "CONICAL_SURFACE") {
         CONICAL_SURFACE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -250,7 +251,7 @@ void instantiation(string index, string keyword, string content)
 
         conical_surfaces.emplace(temp.index, temp);
     }
-    if(keyword == "SPHERICAL_SURFACE") {
+    else if(keyword == "SPHERICAL_SURFACE") {
         SPHERICAL_SURFACE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -263,7 +264,7 @@ void instantiation(string index, string keyword, string content)
 
         spherical_surfaces.emplace(temp.index, temp);
     }
-    if(keyword == "TOROIDAL_SURFACE") {
+    else if(keyword == "TOROIDAL_SURFACE") {
         TOROIDAL_SURFACE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -278,7 +279,7 @@ void instantiation(string index, string keyword, string content)
 
         toroidal_surfaces.emplace(temp.index, temp);
     }
-    if(keyword == "AXIS2_PLACEMENT_3D") {
+    else if(keyword == "AXIS2_PLACEMENT_3D") {
         AXIS2_PLACEMENT_3D temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -292,7 +293,18 @@ void instantiation(string index, string keyword, string content)
 
         axis2_pacement_3ds.emplace(temp.index, temp);
     }
-    if(keyword == "EDGE_LOOP") {
+    else if(keyword == "VERTEX_LOOP") {
+        VERTEX_LOOP temp;
+        temp.index = atoi(index.c_str());
+        //text备注
+        int i = 0;
+        temp.text = getText(content, i);
+        //vertex顶点
+        temp.vertex = getAnIndex(content, i);
+
+        vertex_loops.emplace(temp.index, temp);
+    }
+    else if(keyword == "EDGE_LOOP") {
         EDGE_LOOP temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -303,7 +315,7 @@ void instantiation(string index, string keyword, string content)
 
         edge_loops.emplace(temp.index, temp);
     }
-    if(keyword == "ORIENTED_EDGE") {
+    else if(keyword == "ORIENTED_EDGE") {
         ORIENTED_EDGE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -316,7 +328,7 @@ void instantiation(string index, string keyword, string content)
 
         oriented_edges.emplace(temp.index, temp);
     }
-    if(keyword == "EDGE_CURVE") {
+    else if(keyword == "EDGE_CURVE") {
         EDGE_CURVE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -333,7 +345,7 @@ void instantiation(string index, string keyword, string content)
 
         edge_curves.emplace(temp.index, temp);
     }
-    if(keyword == "VERTEX_POINT") {
+    else if(keyword == "VERTEX_POINT") {
         VERTEX_POINT temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -344,7 +356,7 @@ void instantiation(string index, string keyword, string content)
 
         vertex_points.emplace(temp.index, temp);
     }
-    if(keyword == "CARTESIAN_POINT") {
+    else if(keyword == "CARTESIAN_POINT") {
         CARTESIAN_POINT temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -357,7 +369,7 @@ void instantiation(string index, string keyword, string content)
 
         cartesian_points.emplace(temp.index, temp);
     }
-    if(keyword == "LINE") {
+    else if(keyword == "LINE") {
         LINE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -370,7 +382,7 @@ void instantiation(string index, string keyword, string content)
 
         lines.emplace(temp.index, temp);
     }
-    if(keyword == "VECTOR") {
+    else if(keyword == "VECTOR") {
         VECTOR temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -383,7 +395,7 @@ void instantiation(string index, string keyword, string content)
 
         vectors.emplace(temp.index, temp);
     }
-    if(keyword == "DIRECTION") {
+    else if(keyword == "DIRECTION") {
         DIRECTION temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -396,7 +408,7 @@ void instantiation(string index, string keyword, string content)
 
         directions.emplace(temp.index, temp);
     }
-    if(keyword == "CIRCLE") {
+    else if(keyword == "CIRCLE") {
         CIRCLE temp;
         temp.index = atoi(index.c_str());
         //text备注
@@ -480,11 +492,23 @@ void makeIndexTable()
     }
     for(auto it = face_outer_bounds.begin(); it != face_outer_bounds.end(); it++)
     {
-        edge_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        string type = it->second.indexType(it->second.loop);
+        if(type == "VERTEX_LOOP") {
+            vertex_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        }
+        else if(type == "EDGE_LOOP") {
+            edge_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        }
     }
     for(auto it = face_bounds.begin(); it != face_bounds.end(); it++)
     {
-        edge_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        string type = it->second.indexType(it->second.loop);
+        if(type == "VERTEX_LOOP") {
+            vertex_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        }
+        else if(type == "EDGE_LOOP") {
+            edge_loops.find(it->second.loop)->second.upIndex = it->second.index;
+        }
     }
     for(auto it = planes.begin(); it != planes.end(); it++)
     {
@@ -513,6 +537,10 @@ void makeIndexTable()
         directions.find(it->second.directionZ)->second.upIndex = it->second.index;
         directions.find(it->second.directionX)->second.upIndex = it->second.index;
     }
+    for(auto it = vertex_loops.begin(); it != vertex_loops.end(); it++)
+    {
+        vertex_points.find(it->second.vertex)->second.upIndexes.emplace_back(it->second.index);
+    }
     for(auto it = edge_loops.begin(); it != edge_loops.end(); it++)
     {
         for(auto itt = it->second.edges.begin(); itt != it->second.edges.end(); itt++)
@@ -522,12 +550,12 @@ void makeIndexTable()
     }
     for(auto it = oriented_edges.begin(); it != oriented_edges.end(); it++)
     {
-        edge_curves.find(it->second.curve)->second.upIndexes.push_back(it->second.index);
+        edge_curves.find(it->second.curve)->second.upIndexes.emplace_back(it->second.index);
     }
     for(auto it = edge_curves.begin(); it != edge_curves.end(); it++)
     {
-        vertex_points.find(it->second.vertex1)->second.upIndexes.push_back(it->second.index);
-        vertex_points.find(it->second.vertex2)->second.upIndexes.push_back(it->second.index);
+        vertex_points.find(it->second.vertex1)->second.upIndexes.emplace_back(it->second.index);
+        vertex_points.find(it->second.vertex2)->second.upIndexes.emplace_back(it->second.index);
 
         string type = it->second.indexType(it->second.edge);
         if(type == "LINE") {
@@ -616,6 +644,9 @@ string findIndexType(int index)
     else if(axis2_pacement_3ds.find(index) != axis2_pacement_3ds.end()) {
         return "AXIS2_PLACEMENT_3D";
     }
+    else if(vertex_loops.find(index) != vertex_loops.end()) {
+        return "VERTEX_LOOP";
+    }
     else if(edge_loops.find(index) != edge_loops.end()) {
         return "EDGE_LOOP";
     }
@@ -651,7 +682,7 @@ void output()
     cout << "CLOSED_SHELL" << endl;
     for(auto i = closed_shells.begin(); i != closed_shells.end(); i++)
     {
-        cout << '#' << i->first << " text=" << i->second.text <<" faces=";
+        cout << '#' << i->first << " text=" << i->second.text << " faces=";
         for(auto j = i->second.faces.begin(); j != i->second.faces.end(); j++)
         {
             cout << *j << ' ';
@@ -726,10 +757,17 @@ void output()
         cout << " upIndex=" << i->second.upIndex;
         cout << endl;
     }
+    cout << "VERTEX_LOOP" << endl;
+    for(auto i = vertex_loops.begin(); i != vertex_loops.end(); i++)
+    {
+        cout << '#' << i->first << " text=" << i->second.text << " vertex=" << i->second.vertex;
+        cout << " upIndex=" << i->second.upIndex;
+        cout << endl;
+    }
     cout << "EDGE_LOOP" << endl;
     for(auto i = edge_loops.begin(); i != edge_loops.end(); i++)
     {
-        cout << '#' << i->first << " text=" << i->second.text <<" edges=";
+        cout << '#' << i->first << " text=" << i->second.text << " edges=";
         for(auto j = i->second.edges.begin(); j != i->second.edges.end(); j++)
         {
             cout << *j << ' ';

@@ -1,7 +1,9 @@
 #include "FeatureAnalysis.h"
 
-double pointDistance(map<int, CARTESIAN_POINT>::iterator it1, map<int, CARTESIAN_POINT>::iterator it2)
+double pointDistance(int p1, int p2)
 {
+    auto it1 = cartesian_points.find(p1);
+    auto it2 = cartesian_points.find(p2);
     double x1 = it1->second.x;
     double y1 = it1->second.y;
     double z1 = it1->second.z;
@@ -18,92 +20,260 @@ double pointDistance(double x1, double y1, double z1, double x2, double y2, doub
     return d;
 }
 
+int adjacencySituation(int &face1, int &face2, int edge)
+{
+    auto ad_it1 = advanced_faces.find(face1);
+    auto ad_it2 = advanced_faces.find(face2);
+    string faceType1 = ad_it1->second.indexType(ad_it1->second.face);
+    string faceType2 = ad_it2->second.indexType(ad_it2->second.face);
+    auto ec_it = edge_curves.find(edge);
+    string edgeType = ec_it->second.indexType(ec_it->second.edge);
+
+    if(faceType1 == "PLANE" && faceType2 == "PLANE" && edgeType == "LINE") return 1;
+    else if(faceType1 == "PLANE" && faceType2 == "CYLINDRICAL_SURFACE" && edgeType == "LINE") return 2;
+    else if(faceType1 == "CYLINDRICAL_SURFACE" && faceType2 == "PLANE" && edgeType == "LINE") { //Èôface1ÊÇÖùÃæface2ÊÇÆ½Ãæ£¬ĞèÒª½»»»Ë÷ÒıºÅË³Ğò
+        swap(face1, face2);
+        return 2;
+    }
+    else if(faceType1 == "PLANE" && faceType2 == "CYLINDRICAL_SURFACE" && edgeType == "CIRCLE") return 3;
+    else if(faceType1 == "CYLINDRICAL_SURFACE" && faceType2 == "PLANE" && edgeType == "CIRCLE") {
+        swap(face1, face2);
+        return 3;
+    }
+}
+
+void adjacency()
+{
+    for(auto ec_it = edge_curves.begin(); ec_it != edge_curves.end(); ec_it++)
+    {
+        string edgeType = ec_it->second.indexType(ec_it->second.edge); //±ßÇúÏßÀàĞÍ
+        if(edgeType != "LINE" && edgeType != "CIRCLE") continue;
+        for(int up1 = 0; up1 < ec_it->second.upIndexes.size()-1; up1++) //¶ÔÒıÓÃ¸Ã±ßÇúÏßµÄÓĞÏò±ßÁ½Á½Ö®¼äÕÒÏàÁÚÃæ
+        {
+            for(int up2 = up1+1; up2 < ec_it->second.upIndexes.size(); up2++)
+            {
+                auto oe_it1 = oriented_edges.find(ec_it->second.upIndexes[up1]);
+                int face1 = oe_it1->second.findFace();
+                auto oe_it2 = oriented_edges.find(ec_it->second.upIndexes[up2]);
+                int face2 = oe_it2->second.findFace();
+                int situation = adjacencySituation(face1, face2, ec_it->second.edge);
+                if(situation == 1) {
+                    //Æ½ÃæºÍÆ½ÃæÏàÁÚ£¬Ïà½»±ßÊÇÖ±Ïß
+                }
+                else if(situation == 2) {
+                    //Æ½ÃæºÍÖùÃæÏàÁÚ£¬Ïà½»±ßÊÇÖ±Ïß
+                }
+                else if(situation == 3) {
+                    //Æ½ÃæºÍÖùÃæÏàÁÚ£¬Ïà½»±ßÊÇÔ²
+                }
+            }
+        }
+    }
+}
+
 void cylinder_and_circularHole()
 {
     for(auto cy_it = cylindrical_surfaces.begin(); cy_it != cylindrical_surfaces.end(); cy_it++)
     {
-        auto ad_it = advanced_faces.find(cy_it->second.upIndex); //æ ¹æ®ä¸Šç´¢å¼•æ‰¾åˆ°é«˜çº§é¢
+        auto ad_it = advanced_faces.find(cy_it->second.upIndex); //¸ù¾İÉÏË÷ÒıÕÒµ½¸ß¼¶Ãæ
         if(ad_it->second.flag == true) {
-            //åœ†æŸ±åˆ¤æ–­
-            vector<int> o; //åœ†å½¢è¾¹ç•Œçš„åœ†å¿ƒç¬›å¡å°”ç‚¹ç´¢å¼•å·
+            //Ô²ÖùÅĞ¶Ï
+            vector<int> o; //Ô²ĞÎ±ß½çµÄÔ²ĞÄµÑ¿¨¶ûµãË÷ÒıºÅ
             for(int i = 0; i < ad_it->second.bounds.size(); i++)
             {
                 int bd_id = ad_it->second.bounds[i];
                 if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
-                    auto fob_it = face_outer_bounds.find(bd_id); //æ‰¾åˆ°è¾¹ç•Œ
+                    auto fob_it = face_outer_bounds.find(bd_id); //ÕÒµ½±ß½ç
                     int circle_index;
-                    if(fob_it->second.isCIRCLE(circle_index) == true) { //è¾¹ç•Œæ˜¯åœ†ï¼šè®°å½•åœ†å¿ƒ
+                    if(fob_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ
                         auto cc_it = circles.find(circle_index);
                         auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
                         o.emplace_back(ax_it->second.point);
                     }
                 }
                 if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
-                    auto fb_it = face_bounds.find(bd_id); //æ‰¾åˆ°è¾¹ç•Œ
+                    auto fb_it = face_bounds.find(bd_id); //ÕÒµ½±ß½ç
                     int circle_index;
-                    if(fb_it->second.isCIRCLE(circle_index) == true) { //è¾¹ç•Œæ˜¯åœ†ï¼šè®°å½•åœ†å¿ƒ
+                    if(fb_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ
                         auto cc_it = circles.find(circle_index);
                         auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
                         o.emplace_back(ax_it->second.point);
                     }
                 }
             }
-            double cy_r = cy_it->second.radius;
+            //Ô²ÖùÅĞ¶¨Ìõ¼ş
             if(o.size() == 2) {
-                //æŸ±é¢å«æœ‰ä¸¤ä¸ªåœ†å½¢é¢è¾¹ç•Œæ—¶ï¼Œè¯†åˆ«åœ†æŸ±æˆåŠŸï¼Œè¾“å‡ºç‰¹å¾ä¿¡æ¯
-                auto cp_it1 = cartesian_points.find(o[0]);
-                auto cp_it2 = cartesian_points.find(o[1]);
-                cout << endl << "Cylinder: radius = " << cy_it->second.radius << ", length = " << pointDistance(cp_it1, cp_it2) << endl;
+                //ÖùÃæº¬ÓĞÁ½¸öÔ²ĞÎÃæ±ß½çÊ±£¬Ê¶±ğÎªÔ²Öù£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²ÖùCylinder: radius = " << cy_it->second.radius << ", height = " << pointDistance(o[0], o[1]) << endl;
             }
         }
         else {
-            //åœ†å­”
-            int n = 0; //è¾¹ç¯åªåŒ…å«ä¸€æ¡æœ‰å‘è¾¹çš„è¾¹ç•Œæ•°é‡
-            vector<int> o; //åœ†å½¢è¾¹ç•Œçš„åœ†å¿ƒç¬›å¡å°”ç‚¹ç´¢å¼•å·
+            //Ô²¿×ÅĞ¶Ï
+            int n = 0; //±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ßµÄ±ß½çÊıÁ¿
+            vector<int> o; //Ô²ĞÎ±ß½çµÄÔ²ĞÄµÑ¿¨¶ûµãË÷ÒıºÅ
             for(int i = 0; i < ad_it->second.bounds.size(); i++)
             {
                 int bd_id = ad_it->second.bounds[i];
                 if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
-                    auto fob_it = face_outer_bounds.find(bd_id); //æ‰¾åˆ°è¾¹ç•Œ
+                    auto fob_it = face_outer_bounds.find(bd_id); //ÕÒµ½±ß½ç
                     int circle_index;
-                    if(fob_it->second.isCIRCLE(circle_index) == true) { //è¾¹ç•Œæ˜¯åœ†ï¼šè®°å½•åœ†å¿ƒ,n++
+                    if(fob_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ,n++
                         n++;
                         auto cc_it = circles.find(circle_index);
                         auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
                         o.emplace_back(ax_it->second.point);
                     }
-                    else if(fob_it->second.isSingleEdge() == true) {  //è¾¹ç•Œä¸æ˜¯åœ†ï¼Œä½†è¾¹ç¯åªåŒ…å«ä¸€æ¡æœ‰å‘è¾¹
+                    else if(fob_it->second.isSingleEdge() == true) {  //±ß½ç²»ÊÇÔ²£¬µ«±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ß
                         n++;
                     }
                 }
                 if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
-                    auto fb_it = face_bounds.find(bd_id); //æ‰¾åˆ°è¾¹ç•Œ
+                    auto fb_it = face_bounds.find(bd_id); //ÕÒµ½±ß½ç
                     int circle_index;
-                    if(fb_it->second.isCIRCLE(circle_index) == true) { //è¾¹ç•Œæ˜¯åœ†ï¼šè®°å½•åœ†å¿ƒ,n++
+                    if(fb_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ,n++
                         n++;
                         auto cc_it = circles.find(circle_index);
                         auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
                         o.emplace_back(ax_it->second.point);
                     }
-                    else if(fb_it->second.isSingleEdge() == true) {  //è¾¹ç•Œä¸æ˜¯åœ†ï¼Œä½†è¾¹ç¯åªåŒ…å«ä¸€æ¡æœ‰å‘è¾¹
+                    else if(fb_it->second.isSingleEdge() == true) {  //±ß½ç²»ÊÇÔ²£¬µ«±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ß
                         n++;
                     }
                 }
             }
-            double cy_r = cy_it->second.radius; //åœ†æŸ±åŠå¾„
+            //Ô²¿×ÅĞ¶¨Ìõ¼ş
             if(o.size() == 2) {
-                //æŸ±é¢å«æœ‰ä¸¤ä¸ªåœ†å½¢é¢è¾¹ç•Œæ—¶ï¼Œè¯†åˆ«å¹³é¢åœ†å­”æˆåŠŸï¼Œè¾“å‡ºç‰¹å¾ä¿¡æ¯
-                auto cp_it1 = cartesian_points.find(o[0]);
-                auto cp_it2 = cartesian_points.find(o[1]);
-                cout << endl << "Circular hole: radius = " << cy_it->second.radius << ", length = " << pointDistance(cp_it1, cp_it2) << endl;
+                //ÖùÃæº¬ÓĞÁ½¸öÔ²ĞÎÃæ±ß½çÊ±£¬Ê¶±ğÎªÆ½ÃæÔ²¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Æ½ÃæÔ²¿×Circular hole: radius = " << cy_it->second.radius << ", length = " << pointDistance(o[0], o[1]) << endl;
             }
             else if(o.size() == 1) {
-                //æŸ±é¢å«æœ‰ä¸€ä¸ªåœ†å½¢é¢è¾¹ç•Œæ—¶ï¼Œè¯†åˆ«ä¸ºåœ†å­”ï¼Œè¾“å‡ºç‰¹å¾ä¿¡æ¯
-                cout << endl << "Circular hole: radius = " << cy_it->second.radius << endl;
+                //ÖùÃæº¬ÓĞÒ»¸öÔ²ĞÎÃæ±ß½çÊ±£¬Ê¶±ğÎªÔ²¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²¿×Circular hole: radius = " << cy_it->second.radius << endl;
             }
             else if(ad_it->second.bounds.size() == 2 && n == 2) {
-                //æŸ±é¢æœ‰ä¸”ä»…æœ‰ä¸¤ä¸ªé¢è¾¹ç•Œï¼Œä¸”æ¯ä¸ªé¢è¾¹ç•Œåªå«ä¸€æ¡æœ‰å‘è¾¹æ—¶ï¼Œè¯†åˆ«ä¸ºæ›²é¢åœ†å­”ï¼Œè¾“å‡ºç‰¹å¾ä¿¡æ¯
-                cout << endl << "Circular hole: radius = " << cy_it->second.radius << endl;
+                //ÖùÃæÓĞÇÒ½öÓĞÁ½¸öÃæ±ß½ç£¬ÇÒÃ¿¸öÃæ±ß½çÖ»º¬Ò»ÌõÓĞÏò±ßÊ±£¬Ê¶±ğÎªÇúÃæÔ²¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "ÇúÃæÔ²¿×Circular hole: radius = " << cy_it->second.radius << endl;
+            }
+        }
+    }
+}
+
+void cone_and_conicalHole()
+{
+    for(auto co_it = conical_surfaces.begin(); co_it != conical_surfaces.end(); co_it++)
+    {
+        auto ad_it = advanced_faces.find(co_it->second.upIndex); //¸ù¾İÉÏË÷ÒıÕÒµ½¸ß¼¶Ãæ
+        if(ad_it->second.flag == true) {
+            //Ô²×¶Ô²Ì¨ÅĞ¶Ï
+            int v = -1; //¶¥µãµÑ¿¨¶ûµãË÷ÒıºÅ£¨-1´ú±íÃ»ÓĞ×¶¶¥µã£©
+            vector<int> o; //Ô²ĞÎ±ß½çµÄÔ²ĞÄµÑ¿¨¶ûµãË÷ÒıºÅ
+            vector<double> r; //Ô²ĞÎ±ß½çµÄ°ë¾¶
+            for(int i = 0; i < ad_it->second.bounds.size(); i++)
+            {
+                int bd_id = ad_it->second.bounds[i];
+                if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
+                    auto fob_it = face_outer_bounds.find(bd_id); //ÕÒµ½±ß½ç
+                    int vertex_index;
+                    int circle_index;
+                    if(fob_it->second.isVERTEX(vertex_index) == true) { //±ß½çÊÇ¶¥µã£º¼ÇÂ¼¶¥µãµÄµÑ¿¨¶ûµãË÷ÒıºÅ
+                        auto vp_it = vertex_points.find(vertex_index);
+                        v = vp_it->second.point;
+                    }
+                    else if(fob_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ+°ë¾¶
+                        auto cc_it = circles.find(circle_index);
+                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                        o.emplace_back(ax_it->second.point);
+                        r.emplace_back(cc_it->second.radius);
+                    }
+                }
+                if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
+                    auto fb_it = face_bounds.find(bd_id); //ÕÒµ½±ß½ç
+                    int vertex_index;
+                    int circle_index;
+                    if(fb_it->second.isVERTEX(vertex_index) == true) { //±ß½çÊÇ¶¥µã£º¼ÇÂ¼¶¥µãµÄµÑ¿¨¶ûµãË÷ÒıºÅ
+                        auto vp_it = vertex_points.find(vertex_index);
+                        v = vp_it->second.point;
+                    }
+                    else if(fb_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ+°ë¾¶
+                        auto cc_it = circles.find(circle_index);
+                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                        o.emplace_back(ax_it->second.point);
+                        r.emplace_back(cc_it->second.radius);
+                    }
+                }
+            }
+            //Ô²×¶Ô²Ì¨ÅĞ¶¨Ìõ¼ş
+            if(v != -1 && o.size() == 1) {
+                //×¶Ãæº¬ÓĞÒ»¸ö¶¥µã±ß½çºÍÒ»¸öÔ²ĞÎ±ß½çÊ±£¬Ê¶±ğÎªÔ²×¶£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²×¶Cone: radius = " << r[0] << ", height = " << pointDistance(v, o[0]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+            }
+            else if(o.size() == 2) {
+                //×¶Ãæº¬ÓĞÁ½¸öÔ²ĞÎ±ß½çÊ±£¬Ê¶±ğÎªÔ²Ì¨£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²Ì¨Frustum of cone: radius1 = " << max(r[0], r[1]) << ", radius2 = " << min(r[0], r[1]) << ", height = " << pointDistance(o[0], o[1]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+            }
+        }
+        else {
+            //Ô²×¶¿×Ô²Ì¨¿×ÅĞ¶Ï
+            int n = 0; //±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ßµÄ±ß½çÊıÁ¿
+            int v = -1; //¶¥µãµÑ¿¨¶ûµãË÷ÒıºÅ£¨-1´ú±íÃ»ÓĞ×¶¶¥µã£©
+            vector<int> o; //Ô²ĞÎ±ß½çµÄÔ²ĞÄµÑ¿¨¶ûµãË÷ÒıºÅ
+            vector<double> r; //Ô²ĞÎ±ß½çµÄ°ë¾¶
+            for(int i = 0; i < ad_it->second.bounds.size(); i++)
+            {
+                int bd_id = ad_it->second.bounds[i];
+                if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
+                    auto fob_it = face_outer_bounds.find(bd_id); //ÕÒµ½±ß½ç
+                    int vertex_index;
+                    int circle_index;
+                    if(fob_it->second.isVERTEX(vertex_index) == true) { //±ß½çÊÇ¶¥µã£º¼ÇÂ¼¶¥µãµÄµÑ¿¨¶ûµãË÷ÒıºÅ
+                        auto vp_it = vertex_points.find(vertex_index);
+                        v = vp_it->second.point;
+                    }
+                    else if(fob_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ+°ë¾¶
+                        auto cc_it = circles.find(circle_index);
+                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                        o.emplace_back(ax_it->second.point);
+                        r.emplace_back(cc_it->second.radius);
+                    }
+                    else if(fob_it->second.isSingleEdge() == true) { //±ß½ç²»ÊÇ¶¥µãÒ²²»ÊÇÔ²£¬µ«±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ß
+                        n++;
+                    }
+                }
+                if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
+                    auto fb_it = face_bounds.find(bd_id); //ÕÒµ½±ß½ç
+                    int vertex_index;
+                    int circle_index;
+                    if(fb_it->second.isVERTEX(vertex_index) == true) { //±ß½çÊÇ¶¥µã£º¼ÇÂ¼¶¥µãµÄµÑ¿¨¶ûµãË÷ÒıºÅ
+                        auto vp_it = vertex_points.find(vertex_index);
+                        v = vp_it->second.point;
+                    }
+                    else if(fb_it->second.isCIRCLE(circle_index) == true) { //±ß½çÊÇÔ²£º¼ÇÂ¼Ô²ĞÄ+°ë¾¶
+                        auto cc_it = circles.find(circle_index);
+                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                        o.emplace_back(ax_it->second.point);
+                        r.emplace_back(cc_it->second.radius);
+                    }
+                    else if(fb_it->second.isSingleEdge() == true) { //±ß½ç²»ÊÇ¶¥µãÒ²²»ÊÇÔ²£¬µ«±ß»·Ö»°üº¬Ò»ÌõÓĞÏò±ß
+                        n++;
+                    }
+                }
+            }
+            //Ô²×¶¿×Ô²Ì¨¿×ÅĞ¶¨Ìõ¼ş
+            if(v != -1 && o.size() == 1) {
+                //×¶Ãæº¬ÓĞÒ»¸ö¶¥µã±ß½çºÍÒ»¸öÔ²ĞÎ±ß½çÊ±£¬Ê¶±ğÎªÔ²×¶¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²×¶¿×Conical hole: radius = " << r[0] << ", height = " << pointDistance(v, o[0]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+            }
+            else if(o.size() == 2) {
+                //×¶Ãæº¬ÓĞÁ½¸öÔ²ĞÎ±ß½çÊ±£¬Ê¶±ğÎªÔ²Ì¨¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²Ì¨¿×Frustum hole: radius1 = " << max(r[0], r[1]) << ", radius2 = " << min(r[0], r[1]) << ", height = " << pointDistance(o[0], o[1]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+            }
+            else if(v != -1) {
+                //×¶Ãæº¬ÓĞÒ»¸ö¶¥µã±ß½çºÍÈÎÒâÆäËû±ß½çÊ±£¬Ê¶±ğÎªÇúÃæÔ²×¶¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "ÇúÃæÔ²×¶¿×Conical hole: coneAngle = " << co_it->second.coneAngle << endl;
+            }
+            else if(ad_it->second.bounds.size() == 2 && n == 2) {
+                //×¶ÃæÓĞÇÒ½öÓĞÁ½¸öÃæ±ß½ç£¬ÇÒÃ¿¸öÃæ±ß½çÖ»º¬Ò»ÌõÓĞÏò±ßÊ±£¬Ê¶±ğÎªÇúÃæÔ²×¶¿×£¬Êä³öÌØÕ÷ĞÅÏ¢
+                cout << endl << "Ô²Ì¨¿×Frustum hole: coneAngle = " << co_it->second.coneAngle << endl;
             }
         }
     }

@@ -30,7 +30,7 @@ public:
     int face;
     bool flag;
 
-    vector<int> adjacentFaces;
+    map<int, map<int, int>> adjacentFaces; //map<相邻面索引号, map<相交边索引号, 凹凸性>>，凹凸性1为凸，0为凹,-1为非凹非凸
 
     ADVANCED_FACE(){}
     string indexType(int index);
@@ -46,9 +46,12 @@ public:
     bool flag;
 
     FACE_OUTER_BOUND(){}
+    string indexType(int index);
     bool isCIRCLE();
     bool isCIRCLE(int &circle_index);
     bool isSingleEdge();
+    bool isVERTEX();
+    bool isVERTEX(int &vertex_index);
 };
 
 class FACE_BOUND
@@ -61,9 +64,12 @@ public:
     bool flag;
 
     FACE_BOUND(){}
+    string indexType(int index);
     bool isCIRCLE();
     bool isCIRCLE(int &circle_index);
     bool isSingleEdge();
+    bool isVERTEX();
+    bool isVERTEX(int &vertex_index);
 };
 
 class PLANE
@@ -140,6 +146,18 @@ public:
     string indexType(int index);
 };
 
+class VERTEX_LOOP
+{
+public:
+    int index;
+    int upIndex;
+    string text;
+    int vertex;
+
+    VERTEX_LOOP(){}
+    string indexType(int index);
+};
+
 class EDGE_LOOP
 {
 public:
@@ -162,6 +180,7 @@ public:
     bool flag;
 
     ORIENTED_EDGE(){}
+    int findFace();
 };
 
 class EDGE_CURVE
@@ -188,6 +207,7 @@ public:
     int point;
 
     VERTEX_POINT(){}
+    string indexType(int index);
 };
 
 class CARTESIAN_POINT
@@ -261,6 +281,7 @@ map<int, CONICAL_SURFACE> conical_surfaces;
 map<int, SPHERICAL_SURFACE> spherical_surfaces;
 map<int, TOROIDAL_SURFACE> toroidal_surfaces;
 map<int, AXIS2_PLACEMENT_3D> axis2_pacement_3ds;
+map<int, VERTEX_LOOP> vertex_loops;
 map<int, EDGE_LOOP> edge_loops;
 map<int, ORIENTED_EDGE> oriented_edges;
 map<int, EDGE_CURVE> edge_curves;
@@ -283,6 +304,7 @@ set<string> keywords{
     "SPHERICAL_SURFACE",
     "TOROIDAL_SURFACE",
     "AXIS2_PLACEMENT_3D",
+    "VERTEX_LOOP",
     "EDGE_LOOP",
     "ORIENTED_EDGE",
     "EDGE_CURVE",
