@@ -35,7 +35,7 @@ public:
     ADVANCED_FACE(){}
     string indexType(int index);
 };
-
+ 
 class FACE_OUTER_BOUND
 {
 public:

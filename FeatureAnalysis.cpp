@@ -152,7 +152,7 @@ void cylinder_and_circularHole()
             }
             else if(ad_it->second.bounds.size() == 2 && n == 2) {
                 //柱面有且仅有两个面边界，且每个面边界只含一条有向边时，识别为曲面圆孔，输出特征信息
-                cout << endl << "曲面圆孔Circular hole: radius = " << cy_it->second.radius << endl;
+                cout << endl << "曲面圆孔Curved circular hole: radius = " << cy_it->second.radius << endl;
             }
         }
     }
@@ -163,117 +163,161 @@ void cone_and_conicalHole()
     for(auto co_it = conical_surfaces.begin(); co_it != conical_surfaces.end(); co_it++)
     {
         auto ad_it = advanced_faces.find(co_it->second.upIndex); //根据上索引找到高级面
-        if(ad_it->second.flag == true) {
-            //圆锥圆台判断
-            int v = -1; //顶点笛卡尔点索引号（-1代表没有锥顶点）
-            vector<int> o; //圆形边界的圆心笛卡尔点索引号
-            vector<double> r; //圆形边界的半径
-            for(int i = 0; i < ad_it->second.bounds.size(); i++)
-            {
-                int bd_id = ad_it->second.bounds[i];
-                if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
-                    auto fob_it = face_outer_bounds.find(bd_id); //找到边界
-                    int vertex_index;
-                    int circle_index;
-                    if(fob_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
-                        auto vp_it = vertex_points.find(vertex_index);
-                        v = vp_it->second.point;
-                    }
-                    else if(fob_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆心+半径
-                        auto cc_it = circles.find(circle_index);
-                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
-                        o.emplace_back(ax_it->second.point);
-                        r.emplace_back(cc_it->second.radius);
-                    }
+        
+        //圆锥圆台判定条件准备
+        int n = 0; //边环只包含一条有向边的边界数量
+        int v = -1; //顶点笛卡尔点索引号（-1代表没有锥顶点）
+        vector<int> c; //圆形边界的CIRCLE索引号
+        vector<int> o; //圆形边界的圆心笛卡尔点索引号
+        vector<double> r; //圆形边界的半径
+        for(int i = 0; i < ad_it->second.bounds.size(); i++)
+        {
+            int bd_id = ad_it->second.bounds[i];
+            if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
+                auto fob_it = face_outer_bounds.find(bd_id); //找到边界
+                int vertex_index;
+                int circle_index;
+                if(fob_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
+                    auto vp_it = vertex_points.find(vertex_index);
+                    v = vp_it->second.point;
                 }
-                if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
-                    auto fb_it = face_bounds.find(bd_id); //找到边界
-                    int vertex_index;
-                    int circle_index;
-                    if(fb_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
-                        auto vp_it = vertex_points.find(vertex_index);
-                        v = vp_it->second.point;
-                    }
-                    else if(fb_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆心+半径
-                        auto cc_it = circles.find(circle_index);
-                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
-                        o.emplace_back(ax_it->second.point);
-                        r.emplace_back(cc_it->second.radius);
-                    }
+                else if(fob_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆+圆心+半径
+                    c.emplace_back(circle_index);
+                    auto cc_it = circles.find(circle_index);
+                    auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                    o.emplace_back(ax_it->second.point);
+                    r.emplace_back(cc_it->second.radius);
+                }
+                else if(fob_it->second.isSingleEdge() == true) { //边界不是顶点也不是圆，但边环只包含一条有向边
+                    n++;
                 }
             }
-            //圆锥圆台判定条件
-            if(v != -1 && o.size() == 1) {
-                //锥面含有一个顶点边界和一个圆形边界时，识别为圆锥，输出特征信息
-                cout << endl << "圆锥Cone: radius = " << r[0] << ", height = " << pointDistance(v, o[0]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+            if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
+                auto fb_it = face_bounds.find(bd_id); //找到边界
+                int vertex_index;
+                int circle_index;
+                if(fb_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
+                    auto vp_it = vertex_points.find(vertex_index);
+                    v = vp_it->second.point;
+                }
+                else if(fb_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆+圆心+半径
+                    c.emplace_back(circle_index);
+                    auto cc_it = circles.find(circle_index);
+                    auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
+                    o.emplace_back(ax_it->second.point);
+                    r.emplace_back(cc_it->second.radius);
+                }
+                else if(fb_it->second.isSingleEdge() == true) { //边界不是顶点也不是圆，但边环只包含一条有向边
+                    n++;
+                }
             }
-            else if(o.size() == 2) {
-                //锥面含有两个圆形边界时，识别为圆台，输出特征信息
-                cout << endl << "圆台Frustum of cone: radius1 = " << max(r[0], r[1]) << ", radius2 = " << min(r[0], r[1]) << ", height = " << pointDistance(o[0], o[1]) << ", coneAngle = " << co_it->second.coneAngle << endl;
+        }
+
+        //特征判定
+        if(vertex_loops.size() > 0) {
+            //有顶点标准
+            if(ad_it->second.flag == true) {
+                //圆锥圆台相关
+                if(v != -1 && c.size() == 1) {
+                    //圆锥：锥面+T+有一个VERTEX_LOOP边界+一个CIRCLE边界
+                    cout << endl << "圆锥Cone: 底面半径bottom radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v != -1 && c.size() == 0) {
+                    //曲面圆锥：锥面+T+有一个VERTEX_LOOP边界+没有CIRCLE边界
+                    cout << endl << "曲面圆锥Curved cone: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 2) {
+                    //圆台：锥面+T+有两个CIRCLE边界+没有VERTEX_LOOP边界
+                    cout << endl << "圆台Frustum: 大半径radius1 = " << max(r[0], r[1]) << ", 小半径radius2 = " << min(r[0], r[1]) << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 1 && n >= 1) {
+                    //单曲面圆台：锥面+T+有一个CIRCLE边界+一个及以上单边界+没有VERTEX_LOOP边界
+                    cout << endl << "单曲面圆台Single curved frustum: 半径radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 0 && n >= 2) {
+                    //双曲面圆台：锥面+T+有两个及以上单边界+没有CIRCLE边界+没有VERTEX_LOOP边界（不标准、允许bug存在）
+                    cout << endl << "双曲面圆台Double curved frustum: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+            }
+            else {
+                //圆锥孔圆台孔相关
+                if(v != -1 && c.size() == 1) {
+                    //圆锥孔：锥面+F+有一个VERTEX_LOOP边界+一个CIRCLE边界
+                    cout << endl << "圆锥孔Conical hole: 孔径hole radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v != -1 && c.size() == 0) {
+                    //曲面圆锥孔：锥面+F+有一个VERTEX_LOOP边界+没有CIRCLE边界
+                    cout << endl << "曲面圆锥孔Curved conical hole: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 2) {
+                    //圆台孔：锥面+F+有两个CIRCLE边界+没有VERTEX_LOOP边界
+                    cout << endl << "圆台孔Frustum hole: 大半径radius1 = " << max(r[0], r[1]) << ", 小半径radius2 = " << min(r[0], r[1]) << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 1 && n >= 1) {
+                    //平面曲底圆台孔：锥面+F+有且仅有一个CIRCLE边界（凸）+一个及以上单边界+没有VERTEX_LOOP边界
+                    cout << endl << "平面曲底圆台孔Frustum hole with flat surface and curved bottom: 孔径hole radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 1 && n >= 1) {
+                    //曲面平底圆台孔：锥面+F+有且仅有一个CIRCLE边界（凹）+一个及以上单边界+没有VERTEX_LOOP边界
+                    cout << endl << "曲面平底圆台孔Frustum hole with curved surface and flat bottom: 底面半径bottom radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(v == -1 && c.size() == 0 && n >= 2) {
+                    //曲面曲底圆台孔：锥面+F+有两个及以上单边界+没有CIRCLE边界+没有VERTEX_LOOP边界（不标准、允许bug存在）
+                    cout << endl << "曲面曲底圆台孔Frustum hole with curved surface and curved bottom: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
             }
         }
         else {
-            //圆锥孔圆台孔判断
-            int n = 0; //边环只包含一条有向边的边界数量
-            int v = -1; //顶点笛卡尔点索引号（-1代表没有锥顶点）
-            vector<int> o; //圆形边界的圆心笛卡尔点索引号
-            vector<double> r; //圆形边界的半径
-            for(int i = 0; i < ad_it->second.bounds.size(); i++)
-            {
-                int bd_id = ad_it->second.bounds[i];
-                if(ad_it->second.indexType(bd_id) == "FACE_OUTER_BOUND") {
-                    auto fob_it = face_outer_bounds.find(bd_id); //找到边界
-                    int vertex_index;
-                    int circle_index;
-                    if(fob_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
-                        auto vp_it = vertex_points.find(vertex_index);
-                        v = vp_it->second.point;
-                    }
-                    else if(fob_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆心+半径
-                        auto cc_it = circles.find(circle_index);
-                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
-                        o.emplace_back(ax_it->second.point);
-                        r.emplace_back(cc_it->second.radius);
-                    }
-                    else if(fob_it->second.isSingleEdge() == true) { //边界不是顶点也不是圆，但边环只包含一条有向边
-                        n++;
-                    }
+            //无顶点标准
+            if(ad_it->second.flag == true) {
+                //圆锥圆台相关
+                if(ad_it->second.bounds.size() == 1 && c.size() == 1) {
+                    //圆锥：锥面+T+有且仅有一个边界，边界是CIRCLE（标准）
+                    cout << endl << "圆锥Cone: 底面半径bottom radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
                 }
-                if(ad_it->second.indexType(bd_id) == "FACE_BOUND") {
-                    auto fb_it = face_bounds.find(bd_id); //找到边界
-                    int vertex_index;
-                    int circle_index;
-                    if(fb_it->second.isVERTEX(vertex_index) == true) { //边界是顶点：记录顶点的笛卡尔点索引号
-                        auto vp_it = vertex_points.find(vertex_index);
-                        v = vp_it->second.point;
-                    }
-                    else if(fb_it->second.isCIRCLE(circle_index) == true) { //边界是圆：记录圆心+半径
-                        auto cc_it = circles.find(circle_index);
-                        auto ax_it = axis2_pacement_3ds.find(cc_it->second.axis2);
-                        o.emplace_back(ax_it->second.point);
-                        r.emplace_back(cc_it->second.radius);
-                    }
-                    else if(fb_it->second.isSingleEdge() == true) { //边界不是顶点也不是圆，但边环只包含一条有向边
-                        n++;
-                    }
+                else if(n == 1 && c.size() == 0) {
+                    //曲面圆锥：锥面+T+有且仅有一个单边界+没有CIRCLE边界（不标准、允许bug存在）
+                    cout << endl << "曲面圆锥Curved cone: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(n >= 2 && c.size() == 0) {
+                    //曲面圆锥/双曲面圆台：锥面+T+有两个及以上单边界+没有CIRCLE边界（不标准、允许bug存在，分类模糊）
+                    cout << endl << "曲面圆锥Curved cone/双曲面圆台Double curved frustum: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(c.size() == 2) {
+                    //圆台：锥面+T+有两个CIRCLE边界（标准）
+                    cout << endl << "圆台Frustum: 大半径radius1 = " << max(r[0], r[1]) << ", 小半径radius2 = " << min(r[0], r[1]) << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(c.size() == 1 && n >= 1) {
+                    //圆锥/单曲面圆台：锥面+T+有且仅有一个CIRCLE边界+一个及以上单边界（分类模糊）
+                    cout << endl << "圆锥Cone/单曲面圆台Single curved frustum: 半径radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
                 }
             }
-            //圆锥孔圆台孔判定条件
-            if(v != -1 && o.size() == 1) {
-                //锥面含有一个顶点边界和一个圆形边界时，识别为圆锥孔，输出特征信息
-                cout << endl << "圆锥孔Conical hole: radius = " << r[0] << ", height = " << pointDistance(v, o[0]) << ", coneAngle = " << co_it->second.coneAngle << endl;
-            }
-            else if(o.size() == 2) {
-                //锥面含有两个圆形边界时，识别为圆台孔，输出特征信息
-                cout << endl << "圆台孔Frustum hole: radius1 = " << max(r[0], r[1]) << ", radius2 = " << min(r[0], r[1]) << ", height = " << pointDistance(o[0], o[1]) << ", coneAngle = " << co_it->second.coneAngle << endl;
-            }
-            else if(v != -1) {
-                //锥面含有一个顶点边界和任意其他边界时，识别为曲面圆锥孔，输出特征信息
-                cout << endl << "曲面圆锥孔Conical hole: coneAngle = " << co_it->second.coneAngle << endl;
-            }
-            else if(ad_it->second.bounds.size() == 2 && n == 2) {
-                //锥面有且仅有两个面边界，且每个面边界只含一条有向边时，识别为曲面圆锥孔，输出特征信息
-                cout << endl << "圆台孔Frustum hole: coneAngle = " << co_it->second.coneAngle << endl;
+            else {
+                //圆锥孔圆台孔相关
+                if(ad_it->second.bounds.size() == 1 && c.size() == 1) {
+                    //圆锥孔：锥面+F+有且仅有一个边界，边界是CIRCLE（标准）
+                    cout << endl << "圆锥孔Conical hole: 孔径hole radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(n == 1 && c.size() == 0) {
+                    //曲面圆锥孔：锥面+F+有且仅有一个单边界+没有CIRCLE边界（不标准、允许bug存在）
+                    cout << endl << "曲面圆锥孔Curved conical hole: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(n >= 2 && c.size() == 0) {
+                    //曲面圆锥孔/曲面曲底圆台孔：锥面+F+有两个及以上单边界+没有CIRCLE边界（不标准、允许bug存在，分类模糊）
+                    cout << endl << "曲面圆锥孔Curved conical hole/曲面曲底圆台孔Frustum hole with curved surface and curved bottom: 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(c.size() == 2) {
+                    //圆台孔：锥面+F+有两个CIRCLE边界（标准）
+                    cout << endl << "圆台孔Frustum hole: 大半径radius1 = " << max(r[0], r[1]) << ", 小半径radius2 = " << min(r[0], r[1]) << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(c.size() == 1 && n >= 1) {
+                    //圆锥孔/平面曲底圆台孔：锥面+F+有且仅有一个CIRCLE边界（凸）+一个及以上单边界（分类模糊）
+                    cout << endl << "圆锥孔Conical hole/平面曲底圆台孔Frustum hole with flat surface and curved bottom: 孔径hole radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
+                else if(c.size() == 1 && n >= 1) {
+                    //曲面平底圆台孔：锥面+F+有且仅有一个CIRCLE边界（凹）+一个及以上单边界（不标准、允许bug存在，分类模糊）
+                    cout << endl << "曲面平底圆台孔Frustum hole with curved surface and flat bottom: 底面半径bottom radius = " << r[0] << ", 顶锥角coneAngle = " << co_it->second.coneAngle << endl;
+                }
             }
         }
     }
