@@ -5,7 +5,117 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <math.h>
 using namespace std;
+
+#define PI acos(-1)  //π
+
+struct Point
+{
+public:
+    double x,y,z;
+    Point(){};
+    Point (double x, double y, double z): x(x),y(y),z(z) {};
+};
+struct Vector
+{
+public:
+    double x,y,z;
+    Vector(){};
+    Vector (double x, double y, double z): x(x),y(y),z(z) {};
+    Vector toUnitVector(); //转换为单位向量
+    Vector toOppositeVector(); //转换为相反向量
+    //向量相加
+    Vector operator+(const Vector &b)
+    {
+        Vector ret;
+        ret.x = this->x + b.x;
+        ret.y = this->y + b.y;
+        ret.z = this->z + b.z;
+        return ret;
+    }
+    //向量相减
+    Vector operator-(const Vector &b)
+    {
+        Vector ret;
+        ret.x = this->x - b.x;
+        ret.y = this->y - b.y;
+        ret.z = this->z - b.z;
+        return ret;
+    }
+    //向量点乘
+    double operator*(const Vector &b)
+    {
+        double ret;
+        double x = this->x * b.x;
+        double y = this->y * b.y;
+        double z = this->z * b.z;
+        ret = x + y + z;
+        return ret;
+    }
+    //向量叉乘（遵守右手定则）（与点乘不同）(叉乘的顺序不同，得到的结果向量相反)
+    Vector operator^(const Vector &b)
+    {
+        Vector ret;
+        ret.x = this->y * b.z - b.y * this->z;
+        ret.y = b.x * this->z - this->x * b.z;
+        ret.z = this->x * b.y - b.x * this->y;
+        return ret;
+    }
+    //向量 * double
+    Vector operator*(double b)
+    {
+        Vector ret;
+        ret.x = this->x * b;
+        ret.y = this->y * b;
+        ret.z = this->z * b;
+        return ret;
+    }
+    //向量 / double
+    Vector operator/(double b)
+    {
+        Vector ret;
+        ret.x = this->x / b;
+        ret.y = this->y / b;
+        ret.z = this->z / b;
+        return ret;
+    }
+};
+//获得一个点到一条射线的垂足
+Point GetFootOfPerpendicular(
+    Point pt, //射线外一点
+    Point begin, //射线起点
+    Vector vec); //射线向量
+//获得一个点到一条射线的垂线单位向量（垂线方向为从点指向射线）
+Vector GetPerpendicular(
+    Point pt, //射线外一点
+    Point begin, //射线起点
+    Vector vec); //射线向量
+//获得点a到点b的向量
+Vector vec_ab(const Point &a, const Point &b);
+//获得两向量的夹角
+double getAngle(const Vector &a, const Vector &b);
+//获得两向量的夹角（的绝对值）
+double getAbsAngle(const Vector &a, const Vector &b);
+//转换为单位向量
+Vector toUnitVector(const Vector &v);
+//转换为相反向量
+Vector toOppositeVector(const Vector &v);
+
+
+//公共边
+struct CommonEdge
+{
+public:
+    int index; //公共边曲线索引号
+    string edgeType; //边曲线类型（"LINE","CIRCLE"）
+    int concavity; //凹凸性（凹凸性1为凸，0为凹,-1为非凹非凸）
+    double angle; //夹角
+
+    CommonEdge (int index, string edgeType, int concavity, double angle):index(index),edgeType(edgeType),concavity(concavity),angle(angle) {};
+};
+
+
 /***
 每种实体都用不同的类，每类都有一个map容器
 建立索引
@@ -30,10 +140,13 @@ public:
     int face;
     bool flag;
 
-    map<int, map<int, int>> adjacentFaces; //map<相邻面索引号, map<相交边索引号, 凹凸性>>，凹凸性1为凸，0为凹,-1为非凹非凸
+    map<int, CommonEdge> adjacentFaces; //map<相邻面索引号, 公共边曲线>
+    int visit; //属性邻接图搜索标志位（0为未访问过，1为访问过，2为已识别为特征）
 
     ADVANCED_FACE(){}
     string indexType(int index);
+    string faceType(); //查询面类型
+    Vector getDirectionZ(); //获取Z轴向量
 };
  
 class FACE_OUTER_BOUND
@@ -47,11 +160,11 @@ public:
 
     FACE_OUTER_BOUND(){}
     string indexType(int index);
-    bool isCIRCLE();
-    bool isCIRCLE(int &circle_index);
-    bool isSingleEdge();
-    bool isVERTEX();
-    bool isVERTEX(int &vertex_index);
+    bool isCIRCLE(); //边界是否为单圆形
+    bool isCIRCLE(int &circle_index); //边界是否为单圆形，返回CIRCLE索引号
+    bool isSingleEdge(); //边界是否为单边界（只包含一条边曲线）
+    bool isVERTEX(); //边界是否为顶点环
+    bool isVERTEX(int &vertex_index); //边界是否为顶点环，返回VERTEX索引号
 };
 
 class FACE_BOUND
@@ -65,11 +178,11 @@ public:
 
     FACE_BOUND(){}
     string indexType(int index);
-    bool isCIRCLE();
-    bool isCIRCLE(int &circle_index);
-    bool isSingleEdge();
-    bool isVERTEX();
-    bool isVERTEX(int &vertex_index);
+    bool isCIRCLE(); //边界是否为单圆形
+    bool isCIRCLE(int &circle_index); //边界是否为单圆形，返回CIRCLE索引号
+    bool isSingleEdge(); //边界是否为单边界（只包含一条边曲线）
+    bool isVERTEX(); //边界是否为顶点环
+    bool isVERTEX(int &vertex_index); //边界是否为顶点环，返回VERTEX索引号
 };
 
 class PLANE
@@ -180,7 +293,7 @@ public:
     bool flag;
 
     ORIENTED_EDGE(){}
-    int findFace();
+    int findFace(); //向上找到所在高级面的索引号
 };
 
 class EDGE_CURVE
@@ -220,6 +333,7 @@ public:
 
     CARTESIAN_POINT(){}
     string indexType(int index);
+    Point toPoint(); //转为Point点
 };
 
 class LINE
@@ -256,6 +370,7 @@ public:
 
     DIRECTION(){}
     string indexType(int index);
+    Vector getVector(); //获取为三维向量
 };
 
 class CIRCLE

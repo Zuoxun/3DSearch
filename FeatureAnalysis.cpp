@@ -36,35 +36,174 @@ int adjacencySituation(int &face1, int &face2, int edge)
         return 2;
     }
     else if(faceType1 == "PLANE" && faceType2 == "CYLINDRICAL_SURFACE" && edgeType == "CIRCLE") return 3;
-    else if(faceType1 == "CYLINDRICAL_SURFACE" && faceType2 == "PLANE" && edgeType == "CIRCLE") {
+    else if(faceType1 == "CYLINDRICAL_SURFACE" && faceType2 == "PLANE" && edgeType == "CIRCLE") { //若face1是柱面face2是平面，需要交换索引号顺序
         swap(face1, face2);
         return 3;
     }
 }
 
-void adjacency()
+void makeAAG()
 {
     for(auto ec_it = edge_curves.begin(); ec_it != edge_curves.end(); ec_it++)
     {
         string edgeType = ec_it->second.indexType(ec_it->second.edge); //边曲线类型
-        if(edgeType != "LINE" && edgeType != "CIRCLE") continue;
+        if(edgeType != "LINE" && edgeType != "CIRCLE") continue; //仅寻找公共边是直线或圆的相邻面
         for(int up1 = 0; up1 < ec_it->second.upIndexes.size()-1; up1++) //对引用该边曲线的有向边两两之间找相邻面
         {
             for(int up2 = up1+1; up2 < ec_it->second.upIndexes.size(); up2++)
             {
-                auto oe_it1 = oriented_edges.find(ec_it->second.upIndexes[up1]);
-                int face1 = oe_it1->second.findFace();
-                auto oe_it2 = oriented_edges.find(ec_it->second.upIndexes[up2]);
-                int face2 = oe_it2->second.findFace();
-                int situation = adjacencySituation(face1, face2, ec_it->second.edge);
+                auto oe_it1 = oriented_edges.find(ec_it->second.upIndexes[up1]); //有向边1
+                int face1 = oe_it1->second.findFace(); //相邻面1
+                auto oe_it2 = oriented_edges.find(ec_it->second.upIndexes[up2]); //有向边2
+                int face2 = oe_it2->second.findFace(); //相邻面2
+                int situation = adjacencySituation(face1, face2, ec_it->second.index); //相邻情况(face1自动转为基面)
                 if(situation == 1) {
-                    //平面和平面相邻，相交边是直线
+                    //平面和平面相邻，公共边是直线
+
+                    auto ad_it1 = advanced_faces.find(face1);
+                    auto ad_it2 = advanced_faces.find(face2);
+                    auto pl_it1 = planes.find(ad_it1->second.face);
+                    auto pl_it2 = planes.find(ad_it2->second.face);
+                    auto ax_it1 = axis2_pacement_3ds.find(pl_it1->second.axis2);
+                    auto ax_it2 = axis2_pacement_3ds.find(pl_it2->second.axis2);
+                    auto dirZ_it1 = directions.find(ax_it1->second.directionZ);
+                    auto dirZ_it2 = directions.find(ax_it2->second.directionZ);
+                    Vector dirZ1 = dirZ_it1->second.getVector(); //平面1的Z轴向量
+                    Vector dirZ2 = dirZ_it2->second.getVector(); //平面2的Z轴向量
+                    Vector N1 = (ad_it1->second.flag == true) ? dirZ1 : toOppositeVector(dirZ1); //平面1的外法向量N1
+                    Vector N2 = (ad_it2->second.flag == true) ? dirZ2 : toOppositeVector(dirZ2); //平面2的外法向量N2
+
+                    auto line_it = lines.find(ec_it->second.edge);
+                    auto vec_it = vectors.find(line_it->second.vector);
+                    auto dirE_it = directions.find(vec_it->second.direction);
+                    Vector dirE = dirE_it->second.getVector();
+                    Vector Ne = (oe_it1->second.flag == ec_it->second.flag) ? dirE : toOppositeVector(dirE); //以平面1为基面时的边向量Ne
+
+                    Vector N = Ne ^ N2; //向量叉乘，N的物理意义是平面F2内垂直于公共线e向平面内部的方向向量
+
+                    double theta = getAngle(N, N1); // N 与 N1 的夹角θ
+                    int concavity; //凹凸性
+                    if(fabs(theta) > PI / 2) concavity = 1; // |θ| > π/2时为凸
+                    else if(fabs(theta) < PI / 2) concavity = 0; // |θ| < π/2时为凹
+                    else concavity = -1; // |θ| = π/2时为非凹非凸
+
+                    double angleN = getAbsAngle(N1, N2); //两平面外法向量的夹角绝对值
+                    double angle;//两平面的外表面夹角
+                    if(concavity == 1) {
+                        angle = angleN + PI;
+                    }
+                    else if(concavity == 0) {
+                        angle = PI - angleN;
+                    }
+                    else angle = PI;
+
+                    CommonEdge commonEdge(ec_it->second.index, "LINE", concavity, angle); //公共直线边
+                    ad_it1->second.adjacentFaces.emplace(ad_it2->second.index, commonEdge); //两平面的相邻关系
+                    ad_it2->second.adjacentFaces.emplace(ad_it1->second.index, commonEdge);
                 }
                 else if(situation == 2) {
-                    //平面和柱面相邻，相交边是直线
+                    //平面和柱面相邻，公共边是直线
+
+                    auto ad_it1 = advanced_faces.find(face1);
+                    auto ad_it2 = advanced_faces.find(face2);
+                    auto pl_it = planes.find(ad_it1->second.face);
+                    auto cy_it = cylindrical_surfaces.find(ad_it2->second.face);
+                    auto ax_it1 = axis2_pacement_3ds.find(pl_it->second.axis2);
+                    auto ax_it2 = axis2_pacement_3ds.find(cy_it->second.axis2);
+                    auto dirZ_it1 = directions.find(ax_it1->second.directionZ);
+                    Vector dirZ1 = dirZ_it1->second.getVector(); //平面的Z轴向量
+                    Vector N1 = (ad_it1->second.flag == true) ? dirZ1 : toOppositeVector(dirZ1); //平面的外法向量N1
+
+                    auto vp_it = vertex_points.find(ec_it->second.vertex1);
+                    auto cp_it1 = cartesian_points.find(vp_it->second.point);
+                    Point pt = cp_it1->second.toPoint(); //公共直线边上一点P
+                    auto cp_it2 = cartesian_points.find(ax_it2->second.point);
+                    Point begin = cp_it2->second.toPoint(); //柱面轴心射线起点
+                    auto dirZ_it2 = directions.find(ax_it2->second.directionZ);
+                    Vector dirZ2 = dirZ_it2->second.getVector(); //柱面的Z轴向量（轴心射线向量）
+                    Vector perpendicularVec = GetPerpendicular(pt, begin, dirZ2); //公共边上一点向柱轴心射线的垂线向量
+                    Vector N2 = (ad_it2->second.flag == false) ? perpendicularVec : toOppositeVector(perpendicularVec); //柱面在公共直线边上一点P的外法向量N2
+
+                    auto line_it = lines.find(ec_it->second.edge);
+                    auto vec_it = vectors.find(line_it->second.vector);
+                    auto dirE_it = directions.find(vec_it->second.direction);
+                    Vector dirE = dirE_it->second.getVector();
+                    auto pl_oe_it = (oe_it1->second.findFace() == face1) ? oe_it1 : oe_it2;
+                    Vector Ne = (pl_oe_it->second.flag == ec_it->second.flag) ? dirE : toOppositeVector(dirE); //以平面为基面时的边向量Ne
+                    
+                    Vector N = Ne ^ N2; //向量叉乘，N的物理意义是柱面在与平面的公共直线边上的一个点上，垂直于公共边向柱面方向的切线向量
+
+                    double theta = getAngle(N, N1); // N 与 N1 的夹角θ
+                    int concavity; //凹凸性
+                    if(fabs(theta) > PI / 2) concavity = 1; // |θ| > π/2时为凸
+                    else if(fabs(theta) < PI / 2) concavity = 0; // |θ| < π/2时为凹
+                    else concavity = -1; // |θ| = π/2时为非凹非凸
+
+                    double angleN = getAbsAngle(N1, N2); //平面和柱面外法向量的夹角绝对值
+                    double angle;//平面和柱面的外表面夹角
+                    if(concavity == 1) {
+                        angle = angleN + PI;
+                    }
+                    else if(concavity == 0) {
+                        angle = PI - angleN;
+                    }
+                    else angle = PI;
+
+                    CommonEdge commonEdge(ec_it->second.index, "LINE", concavity, angle); //公共直线边
+                    ad_it1->second.adjacentFaces.emplace(ad_it2->second.index, commonEdge); //平面和柱面的相邻关系
+                    ad_it2->second.adjacentFaces.emplace(ad_it1->second.index, commonEdge);
                 }
                 else if(situation == 3) {
-                    //平面和柱面相邻，相交边是圆
+                    //平面和柱面相邻，公共边是圆
+
+                    auto ad_it1 = advanced_faces.find(face1);
+                    auto ad_it2 = advanced_faces.find(face2);
+                    auto pl_it = planes.find(ad_it1->second.face);
+                    auto cy_it = cylindrical_surfaces.find(ad_it2->second.face);
+                    auto ax_it1 = axis2_pacement_3ds.find(pl_it->second.axis2);
+                    auto ax_it2 = axis2_pacement_3ds.find(cy_it->second.axis2);
+                    auto dirZ_it1 = directions.find(ax_it1->second.directionZ);
+                    Vector dirZ1 = dirZ_it1->second.getVector(); //平面的Z轴向量
+                    Vector N1 = (ad_it1->second.flag == true) ? dirZ1 : toOppositeVector(dirZ1); //平面的外法向量N1
+
+                    auto vp_it = vertex_points.find(ec_it->second.vertex1);
+                    auto cp_it1 = cartesian_points.find(vp_it->second.point);
+                    Point pt = cp_it1->second.toPoint(); //公共圆边上一点P
+                    auto cp_it2 = cartesian_points.find(ax_it2->second.point);
+                    Point begin = cp_it2->second.toPoint(); //柱面轴心射线起点
+                    auto dirZ_it2 = directions.find(ax_it2->second.directionZ);
+                    Vector dirZ2 = dirZ_it2->second.getVector(); //柱面的Z轴向量（轴心射线向量）
+                    Vector perpendicularVec = GetPerpendicular(pt, begin, dirZ2); //公共边上一点向柱轴心射线的垂线向量
+                    Vector PVec = perpendicularVec; //PVec
+
+                    Vector N2 = (ad_it2->second.flag == false) ? perpendicularVec : toOppositeVector(perpendicularVec); //柱面在公共圆边上一点P的外法向量N2
+                    
+                    auto cc_it = circles.find(ec_it->second.edge);
+                    auto ax_it3 = axis2_pacement_3ds.find(cc_it->second.axis2);
+                    auto dirZ_it3 = directions.find(ax_it3->second.directionZ);
+                    Vector dirZ3 = dirZ_it3->second.getVector(); // 圆边曲线的Z轴向量
+                    Vector Vec = dirZ3; //Vec
+
+                    Vector Ne = PVec ^ Vec; //以平面为基面时公共圆边上一点P的切线边向量Ne
+
+                    Vector N = Ne ^ N2; //向量叉乘，N的物理意义是柱面在与平面的公共圆形边上的一个点上，垂直于公共边向柱面方向的切线向量
+
+                    double theta = getAngle(N, N1); // N 与 N1 的夹角θ
+                    int concavity; //凹凸性
+                    if(fabs(theta) > PI / 2) concavity = 1; // |θ| > π/2时为凸
+                    else if(fabs(theta) < PI / 2) concavity = 0; // |θ| < π/2时为凹
+
+                    double angle;//平面和柱面的外表面夹角
+                    if(concavity == 1) {
+                        angle = PI * 1.5;
+                    }
+                    else if(concavity == 0) {
+                        angle = PI * 0.5;
+                    }
+
+                    CommonEdge commonEdge(ec_it->second.index, "CIRCLE", concavity, angle); //公共圆形边
+                    ad_it1->second.adjacentFaces.emplace(ad_it2->second.index, commonEdge); //平面和柱面的相邻关系
+                    ad_it2->second.adjacentFaces.emplace(ad_it1->second.index, commonEdge);
                 }
             }
         }

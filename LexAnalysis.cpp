@@ -679,6 +679,8 @@ string findIndexType(int index)
 
 void output()
 {
+    //STEP文件映射
+    cout << endl << "STEP file:" << endl << endl;
     cout << "CLOSED_SHELL" << endl;
     for(auto i = closed_shells.begin(); i != closed_shells.end(); i++)
     {
@@ -838,5 +840,17 @@ void output()
         cout << '#' << i->first << " text=" << i->second.text << " axis2=" << i->second.axis2 << " radius=" << i->second.radius;
         cout << " upIndex=" << i->second.upIndex;
         cout << endl;
+    }
+
+    //属性邻接图AAG
+    cout << endl << endl << "AAG:" << endl << endl;
+    for(auto ad_it = advanced_faces.begin(); ad_it != advanced_faces.end(); ad_it++)
+    {
+        for(auto adj_it = ad_it->second.adjacentFaces.begin(); adj_it != ad_it->second.adjacentFaces.end(); adj_it++)
+        {
+            CommonEdge commonEdge = adj_it->second;
+            cout << ad_it->second.faceType() << ad_it->second.index << '/' << advanced_faces.find(adj_it->first)->second.faceType() << advanced_faces.find(adj_it->first)->second.index << ' '; 
+            cout << "COMMONEDGE." << "index = " << commonEdge.index << ", edgeType = " << commonEdge.edgeType << ", concavity = " << commonEdge.concavity << ", angle = " << commonEdge.angle << endl;
+        }
     }
 }
