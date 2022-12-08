@@ -40,6 +40,7 @@ int adjacencySituation(int &face1, int &face2, int edge)
         swap(face1, face2);
         return 3;
     }
+    else return 0; //非以上情况返回0
 }
 
 void makeAAG()
