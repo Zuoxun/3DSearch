@@ -185,7 +185,8 @@ void makeAAG()
                     Vector dirZ3 = dirZ_it3->second.getVector(); // 圆边曲线的Z轴向量
                     Vector Vec = dirZ3; //Vec
 
-                    Vector Ne = PVec ^ Vec; //以平面为基面时公共圆边上一点P的切线边向量Ne
+                    auto pl_oe_it = (oe_it1->second.findFace() == face1) ? oe_it1 : oe_it2;
+                    Vector Ne = (pl_oe_it->second.flag == ec_it->second.flag) ? (PVec ^ Vec) : (Vec ^ PVec); //以平面为基面时公共圆边上一点P的切线边向量Ne
 
                     Vector N = Ne ^ N2; //向量叉乘，N的物理意义是柱面在与平面的公共圆形边上的一个点上，垂直于公共边向柱面方向的切线向量
 
