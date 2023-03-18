@@ -51,6 +51,16 @@ void test()
     cout << "test Perpendicular1(" << Perpendicular1.x << ',' << Perpendicular1.y << ',' << Perpendicular1.z << ')' << endl;
 }
 
+void face_use_visit()
+{
+    cout << endl << "face_use_visit:" << endl;
+    for(auto ad_it = advanced_faces.begin(); ad_it != advanced_faces.end(); ad_it++)
+    {
+        cout << ad_it->second.index << ".isUsed = " << ad_it->second.isUsed << ", .isVisited = " << ad_it->second.isVisited << endl;
+    }
+}
+
+
 int main()
 {
     string filepath;
@@ -64,6 +74,8 @@ int main()
             output();
             cylinder_and_circularHole();
             cone_and_conicalHole();
+            setUse(0);
+            closedPocket();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
         //test();

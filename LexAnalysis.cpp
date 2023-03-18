@@ -474,6 +474,7 @@ void makeIndexTable()
         }
 
         string type = it->second.indexType(it->second.face);
+        it->second.faceType = type;
         if(type == "PLANE") {
             planes.find(it->second.face)->second.upIndex = it->second.index;
         }
@@ -558,6 +559,7 @@ void makeIndexTable()
         vertex_points.find(it->second.vertex2)->second.upIndexes.emplace_back(it->second.index);
 
         string type = it->second.indexType(it->second.edge);
+        it->second.edgeType = type;
         if(type == "LINE") {
             lines.find(it->second.edge)->second.upIndex = it->second.index;
         }
@@ -849,7 +851,7 @@ void output()
         for(auto adj_it = ad_it->second.adjacentFaces.begin(); adj_it != ad_it->second.adjacentFaces.end(); adj_it++)
         {
             CommonEdge commonEdge = adj_it->second;
-            cout << ad_it->second.faceType() << ad_it->second.index << '/' << advanced_faces.find(adj_it->first)->second.faceType() << advanced_faces.find(adj_it->first)->second.index << ' '; 
+            cout << ad_it->second.faceType << ad_it->second.index << '/' << advanced_faces.find(adj_it->first)->second.faceType << advanced_faces.find(adj_it->first)->second.index << ' '; 
             cout << "COMMONEDGE." << "index = " << commonEdge.index << ", edgeType = " << commonEdge.edgeType << ", concavity = " << commonEdge.concavity << ", angle = " << commonEdge.angle << endl;
         }
     }

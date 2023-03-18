@@ -9,6 +9,14 @@
 using namespace std;
 
 #define PI acos(-1)  //π
+#define V0 Vector(0,0,0)  //零向量
+#define AnglePrecision 0.001  //角度计算的精度
+#define Precision 0.001  //长度、坐标等计算的精度
+
+//模糊判断两个角度是否相等（精度在0.001内就认为相等）
+bool anglesAreEqual(double angle1, double angle2);
+//模糊判断两个double数值（长度、坐标值）是否相等（精度在0.001内就认为相等）
+bool isEqual(double num1, double num2);
 
 struct Point
 {
@@ -80,6 +88,14 @@ public:
         ret.z = this->z / b;
         return ret;
     }
+    //向量相等（精度在0.001内就认为相等）
+    bool operator==(const Vector &b)
+    {
+        if(!isEqual(this->x, b.x)) return false;
+        if(!isEqual(this->y, b.y)) return false;
+        if(!isEqual(this->z, b.z)) return false;
+        return true;
+    }
 };
 //获得一个点到一条射线的垂足
 Point GetFootOfPerpendicular(
@@ -91,8 +107,10 @@ Vector GetPerpendicular(
     Point pt, //射线外一点
     Point begin, //射线起点
     Vector vec); //射线向量
-//获得点a到点b的向量
-Vector vec_ab(const Point &a, const Point &b);
+//获得点A到点B的向量
+Vector vec_AB(const Point &A, const Point &B);
+//获得点A到点B的距离
+double distance_AB(const Point &A, const Point &B);
 //获得两向量的夹角
 double getAngle(const Vector &a, const Vector &b);
 //获得两向量的夹角（的绝对值）
@@ -101,6 +119,10 @@ double getAbsAngle(const Vector &a, const Vector &b);
 Vector toUnitVector(const Vector &v);
 //转换为相反向量
 Vector toOppositeVector(const Vector &v);
+//判断两向量是否平行
+bool isParallel(Vector a, Vector b);
+//判断两向量是否垂直
+bool isVertical(Vector a, Vector b);
 
 
 //公共边
@@ -113,7 +135,12 @@ public:
     double angle; //夹角
 
     CommonEdge (int index, string edgeType, int concavity, double angle):index(index),edgeType(edgeType),concavity(concavity),angle(angle) {};
+    Vector getVector(); //获得直线边的向量（圆曲线的话返回零向量）
 };
+//判断两公共直线边是否平行
+bool isParallel(const CommonEdge &a, const CommonEdge &b);
+//判断两公共直线边是否垂直
+bool isVertical(const CommonEdge &a, const CommonEdge &b);
 
 
 /***
@@ -141,12 +168,21 @@ public:
     bool flag;
 
     map<int, CommonEdge> adjacentFaces; //map<相邻面索引号, 公共边曲线>
-    int visit; //属性邻接图搜索标志位（0为未访问过，1为访问过，2为已识别为特征）
+    int isUsed = 0; //特征识别标志位（0为未被识别为特征，1为被识别为特征，2为被识别为特征关键面）
+    int isVisited = 0; //属性邻接图搜索标志位（0为未访问过，1为访问过）
 
+    string faceType; //面类型
     ADVANCED_FACE(){}
     string indexType(int index);
-    string faceType(); //查询面类型
+    //string faceType(); //查询面类型
+    bool setUse(int n); //设置特征识别标志位（0为未被识别为特征，1为被识别为特征，2为被识别为特征关键面）
     Vector getDirectionZ(); //获取Z轴向量
+    int concaveCommonEdge_number(); //获取凹公共边个数
+    int concaveCommonLineEdge_number(); //获取凹公共直线边个数
+    vector<map<int, CommonEdge>::iterator> get_concaveAdjacentFaces(); //获取所有凹相邻面的迭代器
+    bool get_4concaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces); //尝试找到一个尺寸最大的由4个凹公共直线边组成的闭环边界（比较边长），返回这四个凹相邻面的迭代器
+    int commonEdge_number_withFace(int faceIndex); //获取与一个高级面的公共边数量
+    CommonEdge* getCommonEdge_withAdjacentFace(int faceIndex); //获取与一个相邻面的公共边指针
 };
  
 class FACE_OUTER_BOUND
@@ -165,6 +201,7 @@ public:
     bool isSingleEdge(); //边界是否为单边界（只包含一条边曲线）
     bool isVERTEX(); //边界是否为顶点环
     bool isVERTEX(int &vertex_index); //边界是否为顶点环，返回VERTEX索引号
+    vector<int> getAllEdges(); //获取边界包含的所有边曲线的索引号
 };
 
 class FACE_BOUND
@@ -183,6 +220,7 @@ public:
     bool isSingleEdge(); //边界是否为单边界（只包含一条边曲线）
     bool isVERTEX(); //边界是否为顶点环
     bool isVERTEX(int &vertex_index); //边界是否为顶点环，返回VERTEX索引号
+    vector<int> getAllEdges(); //获取边界包含的所有边曲线的索引号
 };
 
 class PLANE
@@ -300,15 +338,17 @@ class EDGE_CURVE
 {
 public:
     int index;
-    vector<int> upIndexes; //寻找相邻边的关键点
+    vector<int> upIndexes; //寻找相邻边的关键
     string text;
     int vertex1;
     int vertex2;
     int edge;
     bool flag;
 
+    string edgeType; //边曲线类型（"LINE","CIRCLE"）
     EDGE_CURVE(){}
     string indexType(int index);
+    double length(); //获取直线边曲线的长度（若不是直线，返回0）
 };
 
 class VERTEX_POINT
