@@ -76,6 +76,7 @@ int main()
             cone_and_conicalHole();
             setUse(0);
             closedPocket();
+            hexagonalClosedPocket();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
         //test();

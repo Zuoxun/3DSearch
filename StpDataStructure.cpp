@@ -329,6 +329,68 @@ bool ADVANCED_FACE::get_4concaveAdjacentFaces_closedLoopOutside(vector<map<int, 
 
     if(maxlen > 0) return true; //找到了符合条件的闭合边界
 }
+//尝试找到一个尺寸最大的由6个同样长度的凹公共直线边组成的闭环边界（比较边长），返回这六个凹相邻面的迭代器
+bool ADVANCED_FACE::get_6concaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces)
+{
+    double maxlen = 0; //闭环边界中最长边的长度
+    for(int i = 0; i < bounds.size(); i++)
+    {
+        vector<map<int, CommonEdge>::iterator> temp; //该闭合边界包含的凹公共直线边/凹相邻面
+        vector<int> Edges; //边界包含的所有边曲线的索引号
+        auto fob_it = face_outer_bounds.find(bounds[i]);
+        auto fb_it = face_bounds.find(bounds[i]);
+        if(fob_it != face_outer_bounds.end()) Edges = fob_it->second.getAllEdges();
+        else Edges = fb_it->second.getAllEdges();
+
+        if(Edges.size() != 6) continue; //该闭环边界必须由6个边曲线组成
+
+        //这6个边必须是凹公共直线边
+        bool f = true;
+        for(int j = 0; j < Edges.size(); j++)
+        {
+            bool ff = false;
+            for(auto it = adjacentFaces.begin(); it != adjacentFaces.end(); it++)
+            {
+                if(Edges[j] == it->second.index && it->second.concavity == 0 && it->second.edgeType == "LINE") {
+                    ff = true;
+                    temp.emplace_back(it);
+                    break;
+                }
+            }
+            if(ff == false) {
+                f = false;
+                break;
+            }
+        }
+        if(f == false) continue;
+
+        //比较选择尺寸最大的闭环边界，同时要求边界中的6个边长度相同
+        double temp_len = 0;
+        bool allEqual = true; //边界中6个边长是否都相同
+        for(int k = 0; k < temp.size(); k++)
+        {
+            auto ec_it = edge_curves.find(temp[k]->second.index);
+            auto vp_it1 = vertex_points.find(ec_it->second.vertex1);
+            auto vp_it2 = vertex_points.find(ec_it->second.vertex2);
+            auto cp_it1 = cartesian_points.find(vp_it1->second.point);
+            auto cp_it2 = cartesian_points.find(vp_it2->second.point);
+            Point P1 = cp_it1->second.toPoint();
+            Point P2 = cp_it2->second.toPoint();
+            double len = distance_AB(P1, P2);
+            if(k == 0) temp_len = len;
+            else if(!isEqual(temp_len, len)) {
+                allEqual = false;
+                break;
+            }
+        }
+        if(temp_len > maxlen && allEqual) {
+            concaveAdjacentFaces = temp;
+            maxlen = temp_len;
+        }
+    }
+
+    if(maxlen > 0) return true; //找到了符合条件的闭合边界
+}
 //获取与一个高级面的公共边数量
 int ADVANCED_FACE::commonEdge_number_withFace(int faceIndex)
 {

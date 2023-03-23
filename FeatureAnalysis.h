@@ -38,7 +38,17 @@ bool reorderAdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjacen
 //验证一组向量是否互相之间都平行
 bool allParallel(const vector<Vector> &vecs);
 //验证一组公共边是否属于并组成一个边环
-bool formAEdgeLoop(const vector<map<int, CommonEdge>::iterator> &outsideAdjacentFaces);
+bool formAnEdgeLoop(const vector<map<int, CommonEdge>::iterator> &outsideAdjacentFaces);
+
+//六角型腔
+void hexagonalClosedPocket();
+/*侧相邻面重排序+获得互相间的公共直线边指针
+
+说明：1.验证平面的六个凹相邻面是否符合六角型腔的六个凹相邻面两两之间有且仅有一个公共直线边的相邻特征。
+    2.调整存储的六个凹相邻面的顺序（顺序为：以顺时针或逆时针顺序，第0、1、2、3、4、5个面依次相邻）。
+    3.返回六个公共直线边指针（顺序为：第0、1、2、3、4、5个面依次每两个相邻面之间的公共直线边）
+*/
+bool reorder6AdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces, vector<map<int, ADVANCED_FACE>::iterator> &faces, vector<CommonEdge*> &sideCommonEdges);
 
 //提取盲槽
 void openPocket();
