@@ -33,6 +33,7 @@ public:
     Vector (double x, double y, double z): x(x),y(y),z(z) {};
     Vector toUnitVector(); //转换为单位向量
     Vector toOppositeVector(); //转换为相反向量
+    string show(); //显示向量
     //向量相加
     Vector operator+(const Vector &b)
     {
@@ -113,7 +114,7 @@ Vector vec_AB(const Point &A, const Point &B);
 double distance_AB(const Point &A, const Point &B);
 //获得两向量的夹角
 double getAngle(const Vector &a, const Vector &b);
-//获得两向量的夹角（的绝对值）
+//获得两向量的夹角（的绝对值）（acos计算返回必非负，故此函数可弃用）
 double getAbsAngle(const Vector &a, const Vector &b);
 //转换为单位向量
 Vector toUnitVector(const Vector &v);

@@ -3,12 +3,12 @@
 
 bool anglesAreEqual(double angle1, double angle2)
 {
-    if(max(angle1, angle2) - min(angle1, angle2) < AnglePrecision) return true;
+    if((max(angle1, angle2) - min(angle1, angle2)) < AnglePrecision) return true;
     else return false;
 }
 bool isEqual(double num1, double num2)
 {
-    if(max(num1, num2) - min(num1, num2) < Precision) return true;
+    if((max(num1, num2) - min(num1, num2)) < Precision) return true;
     else return false;
 }
 
@@ -69,17 +69,23 @@ double getAngle(Vector &a, Vector &b)
     double _a_ = sqrt(a.x * a.x + a.y * a.y + a.z * a.z); //向量a的模
     double _b_ = sqrt(b.x * b.x + b.y * b.y + b.z * b.z); //向量b的模
 
-    double Angle = acos(ab / (_a_ * _b_));
+    double _ab_ = (ab / (_a_ * _b_)); //向量夹角的余弦值
+    if(isEqual(_ab_, 1)) _ab_ = 1; //边界值处理，防止acos函数的参数超出范围
+    if(isEqual(_ab_, -1)) _ab_ = -1;
+    double Angle = acos(_ab_);
     return Angle; //返回夹角
 }
-//获得两向量的夹角（的绝对值）
+//获得两向量的夹角（的绝对值）（acos计算返回必非负，故此函数可弃用）
 double getAbsAngle(Vector &a, Vector &b)
 {
     double ab = a * b; //向量点乘内积
     double _a_ = sqrt(a.x * a.x + a.y * a.y + a.z * a.z); //向量a的模
     double _b_ = sqrt(b.x * b.x + b.y * b.y + b.z * b.z); //向量b的模
 
-    double Angle = acos(ab / (_a_ * _b_));
+    double _ab_ = (ab / (_a_ * _b_)); //向量夹角的余弦值
+    if(isEqual(_ab_, 1)) _ab_ = 1; //边界值处理，防止acos函数的参数超出范围
+    if(isEqual(_ab_, -1)) _ab_ = -1;
+    double Angle = acos(_ab_);
     return fabs(Angle); //返回夹角的绝对值
 }
 //转换为单位向量
@@ -118,6 +124,12 @@ Vector Vector::toOppositeVector()
     z = -z;
     Vector vec = *this;
     return vec;
+}
+//显示向量
+string Vector::show()
+{
+    string str = "(" + to_string(x) + ", " + to_string(y) + ", " + to_string(z) + ")";
+    return str;
 }
 //转换为相反向量
 Vector toOppositeVector(const Vector &v)
@@ -377,6 +389,7 @@ bool ADVANCED_FACE::get_6concaveAdjacentFaces_closedLoopOutside(vector<map<int, 
             Point P1 = cp_it1->second.toPoint();
             Point P2 = cp_it2->second.toPoint();
             double len = distance_AB(P1, P2);
+            //cout << "curve" << ec_it->first << ", len" << len << endl;
             if(k == 0) temp_len = len;
             else if(!isEqual(temp_len, len)) {
                 allEqual = false;

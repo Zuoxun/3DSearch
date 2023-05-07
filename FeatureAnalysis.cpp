@@ -81,11 +81,16 @@ void makeAAG()
                     Vector Ne = (oe_it1->second.flag == ec_it->second.flag) ? dirE : toOppositeVector(dirE); //以平面1为基面时的边向量Ne
 
                     Vector N = Ne ^ N2; //向量叉乘，N的物理意义是平面F2内垂直于公共线e向平面内部的方向向量
-
+                    
+                    //cout << "有向边1：#" << oe_it1->first << ",有向边2：#" << oe_it2->first << ",边曲线：#" << ec_it->first << "。Ne: " << Ne.show() << ", N1: " << N1.show() << ", N2: " << N2.show() << ", N: " << N.show() << endl;
+                    
                     double theta = getAngle(N, N1); // N 与 N1 的夹角θ
+                    
+                    //cout << "θ = " << theta << endl;
+
                     int concavity; //凹凸性
-                    if(fabs(theta) > PI / 2) concavity = 1; // |θ| > π/2时为凸
-                    else if(fabs(theta) < PI / 2) concavity = 0; // |θ| < π/2时为凹
+                    if(fabs(theta) > (PI / 2.0)) concavity = 1; // |θ| > π/2时为凸
+                    else if(fabs(theta) < (PI / 2.0)) concavity = 0; // |θ| < π/2时为凹
                     else concavity = -1; // |θ| = π/2时为非凹非凸
 
                     double angleN = getAbsAngle(N1, N2); //两平面外法向量的夹角绝对值
@@ -491,7 +496,7 @@ void closedPocket()
     {
         if(ad_it->second.faceType != "PLANE") continue; //不是平面直接跳过
 
-        if(ad_it->second.concaveCommonLineEdge_number() < 4) continue; //凹公共直线边个数必须多于4个
+        if(ad_it->second.concaveCommonLineEdge_number() < 4) continue; //凹公共直线边个数必须不少于4个
         //cout << "Plane" << ad_it->first<<endl;
 
         //在底面中能找到一个尺寸最大的由4个凹公共直线边组成的闭环边界（比较边长）（为了规避底面内部可能出现的四棱柱）
@@ -575,7 +580,7 @@ void closedPocket()
         }
 
         /*外部标准判定：
-        四个侧面同时与同一个平面（除了底面）相邻于一个90度凸直线公共边，且这四条直线边属于并组成一个边环（这里需要一个找边环函数），且四条边相邻垂直。——外部标准，可以输出腔深度
+        四个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这四条直线边属于并组成一个边环（这里需要一个找边环函数），且四条边相邻垂直。——外部标准，可以输出腔深度
         否则外部非标准。
         */
         bool outside_typical = false; //外部是否标准
@@ -583,7 +588,7 @@ void closedPocket()
         for(auto af_it = faces[0]->second.adjacentFaces.begin(); af_it != faces[0]->second.adjacentFaces.end(); af_it++) //先找到第0个侧面的外相邻面
         {
             if(af_it->second.concavity != 1) continue; //凸
-            if(anglesAreEqual(af_it->second.angle, (PI/2))) continue; //夹角为90度
+            if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
             if(af_it->second.edgeType != "LINE") continue; //直线公共边
             auto oaf_it = advanced_faces.find(af_it->first);
             if(planes.find(oaf_it->second.face) != planes.end()) { //外相邻面是平面
@@ -598,7 +603,7 @@ void closedPocket()
                 for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //再找剩下3个侧面的外相邻面
                 {
                     if(af_it->first != outsideAdjacentFaces[0]->first) continue; //第i个侧面的外相邻面与第0个侧面的外相邻面是同一个面
-                    if(anglesAreEqual(af_it->second.angle, (PI/2))) continue; //夹角为90度
+                    if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
                     if(af_it->second.concavity != 1) continue; //凸
                     if(af_it->second.edgeType != "LINE") continue; //直线公共边
                     outsideAdjacentFaces.emplace_back(af_it);
@@ -610,6 +615,46 @@ void closedPocket()
             }
             //四条外相邻直线边属于并组成一个边环
             if(outsideAdjacentFaces.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces)) outside_typical = true;  //条件符合外部标准
+        }
+        else if(outsideAdjacentFaces.size() > 1) { // 第0个侧面找到符合条件的外相邻面多于1个，要与对位的第1个侧面比对共同的外相邻面是哪个,再继续判断
+            bool foundCommonFace = false; // 是否找到第0侧面与第1侧面的公共外相邻面
+            for(auto af_it = faces[1]->second.adjacentFaces.begin(); af_it != faces[1]->second.adjacentFaces.end(); af_it++) //找到与第0个侧面对位的第1个侧面的外相邻面，对比得到公共外相邻面
+            {
+                if(af_it->second.concavity != 1) continue; //凸
+                if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                for(auto oaf_itt = outsideAdjacentFaces.begin(); oaf_itt != outsideAdjacentFaces.end(); oaf_itt++)
+                {
+                    if(af_it->first == (*oaf_itt)->first) { //找到公共外相邻面
+                        outsideAdjacentFaces.clear();
+                        outsideAdjacentFaces.emplace_back(*oaf_itt);
+                        outsideAdjacentFaces.emplace_back(af_it);
+                        foundCommonFace = true;
+                        break;
+                    }
+                }
+                if(foundCommonFace == true) break; //找到了公共外相邻面
+            }
+            //与第2侧面、第3侧面继续判断公共外相邻面
+            if(foundCommonFace == true) {
+                for(int i = 2; i < 4; i++)
+                {
+                    bool found = false;
+                    for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //再找剩下2个侧面的外相邻面
+                    {
+                        if(af_it->first != outsideAdjacentFaces[0]->first) continue; //第i个侧面的外相邻面与第0个侧面的外相邻面是同一个面
+                        if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                        if(af_it->second.concavity != 1) continue; //凸
+                        if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                        outsideAdjacentFaces.emplace_back(af_it);
+                        found = true;
+                        break;
+                    }
+                    if(found == false) break; //第i个侧面中未找到与第0个侧面外相邻面相同的外相邻面
+                }
+                //四条外相邻直线边属于并组成一个边环
+                if(outsideAdjacentFaces.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces)) outside_typical = true;  //条件符合外部标准
+            }
         }
         
         //若确定为外部标准型腔，计算几何参数
@@ -721,7 +766,24 @@ void hexagonalClosedPocket()
     {
         if(ad_it->second.faceType != "PLANE") continue; //不是平面直接跳过
 
-        if(ad_it->second.concaveCommonLineEdge_number() < 6) continue; //凹公共直线边个数必须多于6个
+        // if(ad_it->second.bounds.size() == 1) {
+        //     auto fob_it = face_outer_bounds.find(ad_it->second.bounds[0]);
+        //     if(fob_it != face_outer_bounds.end()) {
+        //         auto el_it = edge_loops.find(fob_it->second.loop);
+        //         if(el_it->second.edges.size() == 6) {
+        //             cout << "face = " << ad_it->first << ", edge = ";
+        //             for(int i = 0; i < 6; i++)
+        //             {
+        //                 auto oe_it = oriented_edges.find(el_it->second.edges[i]);
+        //                 auto ec_it = edge_curves.find(oe_it->second.curve);
+        //                 cout << ec_it->first << ' ';
+        //             }
+        //             cout << endl;
+        //         }
+        //     }
+        // }
+        if(ad_it->second.concaveCommonLineEdge_number() < 6) continue; //凹公共直线边个数必须不少于6个
+        //cout << "face" << ad_it->first << endl;
 
         //在底面中能找到一个尺寸最大的由6个同样长度的凹公共直线边组成的闭环边界（比较边长）（为了规避底面内部可能出现的六棱柱）
         vector<map<int, CommonEdge>::iterator> concaveAdjacentFaces; //最大闭环边界凹相邻面的迭代器
@@ -793,7 +855,7 @@ void hexagonalClosedPocket()
         }
 
         /*外部标准判定：
-        六个侧面同时与同一个平面（除了底面）相邻于一个90度凸直线公共边，且这六条直线边属于并组成一个边环（这里需要一个找边环函数），且六条边相邻垂直。——外部标准，可以输出腔深度
+        六个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这六条直线边属于并组成一个边环（这里需要一个找边环函数），且六条边相邻垂直。——外部标准，可以输出腔深度
         否则外部非标准。
         */
         bool outside_typical = false; //外部是否标准
@@ -801,7 +863,7 @@ void hexagonalClosedPocket()
         for(auto af_it = faces[0]->second.adjacentFaces.begin(); af_it != faces[0]->second.adjacentFaces.end(); af_it++) //先找到第0个侧面的外相邻面
         {
             if(af_it->second.concavity != 1) continue; //凸
-            if(anglesAreEqual(af_it->second.angle, (PI/2))) continue; //夹角为90度
+            if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
             if(af_it->second.edgeType != "LINE") continue; //直线公共边
             auto oaf_it = advanced_faces.find(af_it->first);
             if(planes.find(oaf_it->second.face) != planes.end()) { //外相邻面是平面
@@ -815,7 +877,7 @@ void hexagonalClosedPocket()
                 for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //再找剩下5个侧面的外相邻面
                 {
                     if(af_it->first != outsideAdjacentFaces[0]->first) continue; //第i个侧面的外相邻面与第0个侧面的外相邻面是同一个面
-                    if(anglesAreEqual(af_it->second.angle, (PI/2))) continue; //夹角为90度
+                    if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
                     if(af_it->second.concavity != 1) continue; //凸
                     if(af_it->second.edgeType != "LINE") continue; //直线公共边
                     outsideAdjacentFaces.emplace_back(af_it);
@@ -827,29 +889,94 @@ void hexagonalClosedPocket()
             //六条外相邻直线边属于并组成一个边环
             if(outsideAdjacentFaces.size() == 6 && formAnEdgeLoop(outsideAdjacentFaces)) outside_typical = true;  //条件符合外部标准
 
-            //若确定为外部标准六角型腔，计算几何参数
-            auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧相邻面公共边的边曲线索引
-            double depth = sideEdge_it->second.length(); //六角型腔的深度
-            auto bottomEdge_it = edge_curves.find(concaveAdjacentFaces[0]->second.index); //底面的一个相邻边界
-            double length = bottomEdge_it->second.length(); //底面边长
+            // //若确定为外部标准六角型腔，计算几何参数
+            // auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧相邻面公共边的边曲线索引
+            // double depth = sideEdge_it->second.length(); //六角型腔的深度
+            // auto bottomEdge_it = edge_curves.find(concaveAdjacentFaces[0]->second.index); //底面的一个相邻边界
+            // double length = bottomEdge_it->second.length(); //底面边长
 
-            //判定完毕，输出
-            cout << endl << "六角型腔Hexagonal Closed pocket ";
-            if(inside_typical == true) cout << "内部标准Typical inside ";
-            else cout << "内部非标准Not typical inside ";
-            if(outside_typical == true) cout << "外部标准Typical outside: ";
-            else cout << "外部非标准Not typical outside: ";
-            if(outside_typical == true) cout << "深度depth = " << depth << ", ";
-            cout << "底面边长length = " << length;
-            cout << " | 底面#" << ad_it->first << ", 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
+            // //判定完毕，输出
+            // cout << endl << "六角型腔Hexagonal Closed pocket ";
+            // if(inside_typical == true) cout << "内部标准Typical inside ";
+            // else cout << "内部非标准Not typical inside ";
+            // if(outside_typical == true) cout << "外部标准Typical outside: ";
+            // else cout << "外部非标准Not typical outside: ";
+            // if(outside_typical == true) cout << "深度depth = " << depth << ", ";
+            // cout << "底面边长length = " << length;
+            // cout << " | 底面#" << ad_it->first << ", 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
 
-            //屏蔽关键面
-            ad_it->second.setUse(2);
-            for(int i = 0; i < 6; i++)
+            // //屏蔽关键面
+            // ad_it->second.setUse(2);
+            // for(int i = 0; i < 6; i++)
+            // {
+            //     faces[i]->second.setUse(1);
+            // }
+        }
+        else if(outsideAdjacentFaces.size() > 1) { // 第0个侧面找到符合条件的外相邻面多于1个，要与不相邻的第2个侧面比对共同的外相邻面是哪个,再继续判断
+            bool foundCommonFace = false; //是否找到不相邻的第2个侧面与第0个侧面有共同的外相邻面
+            for(auto af_it = faces[2]->second.adjacentFaces.begin(); af_it != faces[2]->second.adjacentFaces.end(); af_it++) //找到与第0个侧面不相邻的第2个侧面的外相邻面，对比得到公共外相邻面
             {
-                faces[i]->second.setUse(1);
+                if(af_it->second.concavity != 1) continue; //凸
+                if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                for(auto oaf_itt = outsideAdjacentFaces.begin(); oaf_itt != outsideAdjacentFaces.end(); oaf_itt++)
+                {
+                    if(af_it->first == (*oaf_itt)->first) { //找到公共外相邻面
+                        outsideAdjacentFaces.clear();
+                        outsideAdjacentFaces.emplace_back(*oaf_itt);
+                        outsideAdjacentFaces.emplace_back(af_it);
+                        foundCommonFace = true;
+                        break;
+                    }
+                }
+                if(foundCommonFace == true) break; //找到了公共外相邻面
+            }
+            if(foundCommonFace == true) { //找到了公共外相邻面，继续判断
+                for(int i = 1; i < 6; i++)
+                {
+                    if(i == 2) continue; //跳过第2个侧面(前面已经判断过了)
+                    bool found = false;
+                    for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //再找剩下4个侧面的外相邻面
+                    {
+                        if(af_it->first != outsideAdjacentFaces[0]->first) continue; //第i个侧面的外相邻面与第0个侧面的外相邻面是同一个面
+                        //cout << '#' << faces[i]->first << " 与 #" << af_it->first << " 夹角为" << af_it->second.angle << "， " << af_it->second.concavity << endl;
+                        if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                        if(af_it->second.concavity != 1) continue; //凸
+                        if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                        outsideAdjacentFaces.emplace_back(af_it);
+                        found = true;
+                        break;
+                    }
+                    if(found == false) break; //第i个侧面中未找到与第0个侧面外相邻面相同的外相邻面
+                }
+                if(outsideAdjacentFaces.size() == 6) swap(outsideAdjacentFaces[1], outsideAdjacentFaces[2]); //将第1个侧面的外相邻面与第2个侧面的外相邻面交换，以满足外相邻面按侧面顺序排列
+                //六条外相邻直线边属于并组成一个边环
+                if(outsideAdjacentFaces.size() == 6 && formAnEdgeLoop(outsideAdjacentFaces)) outside_typical = true;  //条件符合外部标准
             }
         }
+
+        //若确定为外部标准六角型腔，计算几何参数
+        auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧相邻面公共边的边曲线索引
+        double depth = sideEdge_it->second.length(); //六角型腔的深度
+        auto bottomEdge_it = edge_curves.find(concaveAdjacentFaces[0]->second.index); //底面的一个相邻边界
+        double length = bottomEdge_it->second.length(); //底面边长
+
+        //判定完毕，输出
+        cout << endl << "六角型腔Hexagonal Closed pocket ";
+        if(inside_typical == true) cout << "内部标准Typical inside ";
+        else cout << "内部非标准Not typical inside ";
+        if(outside_typical == true) cout << "外部标准Typical outside: ";
+        else cout << "外部非标准Not typical outside: ";
+        if(outside_typical == true) cout << "深度depth = " << depth << ", ";
+        cout << "底面边长length = " << length;
+        cout << " | 底面#" << ad_it->first << ", 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
+
+        // //屏蔽关键面
+        // ad_it->second.setUse(2);
+        // for(int i = 0; i < 6; i++)
+        // {
+        //     faces[i]->second.setUse(1);
+        // }
     }
 }
 bool reorder6AdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces, vector<map<int, ADVANCED_FACE>::iterator> &faces, vector<CommonEdge*> &sideCommonEdges)
@@ -889,4 +1016,18 @@ bool reorder6AdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjace
 
     //验证了六个侧相邻面的相邻关系，完成了面的重新排序和公共直线边的获取后，返回成功
     return true;
+}
+
+
+void squareHole()
+{
+    for(auto ad_it = advanced_faces.begin(); ad_it != advanced_faces.end(); ad_it++)
+    {
+        if(ad_it->second.faceType != "PLANE") continue; //不是平面直接跳过
+    }
+}
+
+void hexagonalHole()
+{
+
 }

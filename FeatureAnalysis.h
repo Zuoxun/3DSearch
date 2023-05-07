@@ -50,11 +50,14 @@ void hexagonalClosedPocket();
 */
 bool reorder6AdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces, vector<map<int, ADVANCED_FACE>::iterator> &faces, vector<CommonEdge*> &sideCommonEdges);
 
-//提取盲槽
-void openPocket();
-
 //提取方孔
 void squareHole();
+
+//提取六角孔
+void hexagonalHole();
+
+//提取盲槽
+void openPocket();
 
 //提取通槽
 void throughSlot();
