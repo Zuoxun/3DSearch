@@ -580,7 +580,7 @@ void closedPocket()
         }
 
         /*外部标准判定：
-        四个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这四条直线边属于并组成一个边环（这里需要一个找边环函数），且四条边相邻垂直。——外部标准，可以输出腔深度
+        四个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这四条直线边属于并组成一个边环（这里需要一个找边环函数），（且四条边相邻垂直）。——外部标准，可以输出腔深度
         否则外部非标准。
         */
         bool outside_typical = false; //外部是否标准
@@ -855,7 +855,7 @@ void hexagonalClosedPocket()
         }
 
         /*外部标准判定：
-        六个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这六条直线边属于并组成一个边环（这里需要一个找边环函数），且六条边相邻垂直。——外部标准，可以输出腔深度
+        六个侧面同时与同一个平面（除了底面）相邻于一个270度凸直线公共边，且这六条直线边属于并组成一个边环（这里需要一个找边环函数），（且六条边相邻垂直）。——外部标准，可以输出腔深度
         否则外部非标准。
         */
         bool outside_typical = false; //外部是否标准
@@ -971,12 +971,12 @@ void hexagonalClosedPocket()
         cout << "底面边长length = " << length;
         cout << " | 底面#" << ad_it->first << ", 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
 
-        // //屏蔽关键面
-        // ad_it->second.setUse(2);
-        // for(int i = 0; i < 6; i++)
-        // {
-        //     faces[i]->second.setUse(1);
-        // }
+        //屏蔽关键面
+        ad_it->second.setUse(2);
+        for(int i = 0; i < 6; i++)
+        {
+            faces[i]->second.setUse(1);
+        }
     }
 }
 bool reorder6AdjacentFaces(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces, vector<map<int, ADVANCED_FACE>::iterator> &faces, vector<CommonEdge*> &sideCommonEdges)
@@ -1024,10 +1024,309 @@ void squareHole()
     for(auto ad_it = advanced_faces.begin(); ad_it != advanced_faces.end(); ad_it++)
     {
         if(ad_it->second.faceType != "PLANE") continue; //不是平面直接跳过
+
+        if(ad_it->second.concaveCommonLineEdge_number() < 2) continue; //凹公共直线边个数必须不少于2个
+
+        //能找到一对夹角90度的凹公共直线边，对应的两个凹相邻面（平面）能找到另一个共同的凹相邻面（平面）、另一对夹角90度的凹公共直线边，过程中要求四条直线边相互平行，每两个相邻面之间有且仅有一条公共直线边
+        vector<map<int, ADVANCED_FACE>::iterator> faces; //方孔四个面高级面的迭代器（第0个、第1个面为一对不相邻的对位面，第2个、第3个面为另一对不相邻的对位面）
+        vector<CommonEdge*> sideCommonEdges; //四个面两两之间的公共边指针（顺序为：第0个、第2个面之间的公共边，第0个、第3个面之间的公共边，第1个、第2个面之间的公共边，第1个、第3个面之间的公共边）
+        bool found = false; //是否找到符合条件的四个面
+        for(auto af_it1 = ad_it->second.adjacentFaces.begin(); af_it1 != ad_it->second.adjacentFaces.end(); af_it1++)
+        {
+            if(advanced_faces.find(af_it1->first)->second.faceType != "PLANE") continue; //不是平面直接跳过
+            if(af_it1->second.edgeType != "LINE") continue; //直线公共边
+            if(af_it1->second.concavity != 0) continue; //凹公共直线边
+            if(!anglesAreEqual(af_it1->second.angle, (PI/2))) continue; //夹角为90度
+
+            for(auto af_it2 = af_it1; af_it2 != ad_it->second.adjacentFaces.end(); af_it2++)
+            {
+                if(af_it1->first == af_it2->first) continue; //两个凹相邻面不能是同一个面
+                if(advanced_faces.find(af_it2->first)->second.faceType != "PLANE") continue; //不是平面直接跳过
+                if(af_it2->second.edgeType != "LINE") continue; //直线公共边
+                if(af_it2->second.concavity != 0) continue; //凹公共直线边
+                if(!anglesAreEqual(af_it2->second.angle, (PI/2))) continue; //夹角为90度
+                
+                if(!isParallel(af_it1->second.getVector(), af_it2->second.getVector())) continue; //两条直线边要相互平行
+
+                if(ad_it->second.commonEdge_number_withFace(af_it1->first) != 1) continue; //与两个凹相邻面分别有且仅有一条公共直线边
+                if(ad_it->second.commonEdge_number_withFace(af_it2->first) != 1) continue;
+
+                auto afAd_it1 = advanced_faces.find(af_it1->first); //第一个凹相邻面的高级面迭代器
+                auto afAd_it2 = advanced_faces.find(af_it2->first); //第二个凹相邻面的高级面迭代器
+                for(auto af_it3 = afAd_it1->second.adjacentFaces.begin(); af_it3 != afAd_it1->second.adjacentFaces.end(); af_it3++)
+                {
+                    if(advanced_faces.find(af_it3->first)->second.faceType != "PLANE") continue; //不是平面直接跳过
+                    if(af_it3->second.edgeType != "LINE") continue; //直线公共边
+                    if(af_it3->second.concavity != 0) continue; //凹公共直线边
+                    if(!anglesAreEqual(af_it3->second.angle, (PI/2))) continue; //夹角为90度
+                    for(auto af_it4 = afAd_it2->second.adjacentFaces.begin(); af_it4 != afAd_it2->second.adjacentFaces.end(); af_it4++)
+                    {
+                        if(af_it3->first != af_it4->first) continue; //两个凹相邻面共同相邻于另一个面
+                        if(af_it3->first == ad_it->first) continue; //另一个共同相邻面不能是第一个共同相邻面
+                        if(advanced_faces.find(af_it4->first)->second.faceType != "PLANE") continue; //不是平面直接跳过
+                        if(af_it4->second.edgeType != "LINE") continue; //直线公共边
+                        if(af_it4->second.concavity != 0) continue; //凹公共直线边
+                        if(!anglesAreEqual(af_it4->second.angle, (PI/2))) continue; //夹角为90度
+
+                        if(!isParallel(af_it3->second.getVector(), af_it4->second.getVector())) continue; //两条直线边要相互平行
+
+                        if(afAd_it1->second.commonEdge_number_withFace(af_it3->first) != 1) continue; //与两个凹相邻面分别有且仅有一条公共直线边
+                        if(afAd_it2->second.commonEdge_number_withFace(af_it4->first) != 1) continue;
+
+                        if(!isParallel(af_it1->second.getVector(), af_it3->second.getVector())) continue; //保证四条直线边两两平行
+
+                        //保存方孔四个面的高级面迭代器
+                        faces.emplace_back(ad_it);
+                        auto afAd_it3 = advanced_faces.find(af_it3->first);
+                        faces.emplace_back(afAd_it3);
+                        faces.emplace_back(afAd_it1);
+                        faces.emplace_back(afAd_it2);
+                        
+                        //保存四个面两两之间的公共边指针
+                        sideCommonEdges.emplace_back(ad_it->second.getCommonEdge_withAdjacentFace(afAd_it1->first));
+                        sideCommonEdges.emplace_back(ad_it->second.getCommonEdge_withAdjacentFace(afAd_it2->first));
+                        sideCommonEdges.emplace_back(afAd_it1->second.getCommonEdge_withAdjacentFace(afAd_it3->first));
+                        sideCommonEdges.emplace_back(afAd_it2->second.getCommonEdge_withAdjacentFace(afAd_it3->first));
+                        found = true; //标记已经找到了符合条件的四个面
+                        break;
+                    }
+                    if(found == true) break;
+                }
+                if(found == true) break;
+            }
+            if(found == true) break;
+        }
+        if(found == false) continue; //没有找到符合条件的四个面，跳过
+
+        //四个面不能全是已被识别为特征的面（isUsed == 1）。也不能有被屏蔽过的关键面（isUsed == 2）
+        bool used = true;
+        for(int i = 0; i < 4; i++)
+        {
+            if(faces[i]->second.isUsed == 2) {
+                used = true;
+                break;
+            }
+            else if(faces[i]->second.isUsed == 0) used = false;
+        }
+        if(used == true) continue;
+
+        /*内部标准判定：
+        内部四个面都只含有必要边（仅有一个闭环边界）时判定为内部标准，否则为内部非标准。
+        （主要是为了区分四个面内有没有开孔凸起等特殊处理）
+        */
+        bool inside_typical = true; //内部是否标准
+        for(int i = 0; i < 4; i++)
+        {
+            if(faces[i]->second.bounds.size() != 1) inside_typical = false; //四个面闭环边界不仅一个，内部非标准
+        }
+
+        /*外部标准判定：
+        四个面同时与同一个平面相邻于一个270度凸直线公共边，且这四条直线边属于并组成一个边环（这里需要一个找边环函数）。
+        ————这样的公共外相邻面能找到两个时称为双平面外部标准方孔，可以输出方孔深度；这样的公共外相邻面能只找到一个时称为单平面外部标准方孔，不能输出方孔深度。
+        否则外部非标准。        
+        */
+        bool outside_typical1 = false, outside_typical2 = false; //外部是否标准
+        vector<map<int, CommonEdge>::iterator> outsideAdjacentFaces1; //四个面的第一个外相邻面
+        vector<map<int, CommonEdge>::iterator> outsideAdjacentFaces2; //四个面的第二个外相邻面
+        for(auto af_it = faces[0]->second.adjacentFaces.begin(); af_it != faces[0]->second.adjacentFaces.end(); af_it++) //先找到第0个面的外相邻面
+        {
+            if(af_it->second.concavity != 1) continue; //凸
+            if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+            if(af_it->second.edgeType != "LINE") continue; //直线公共边
+            auto oaf_it = advanced_faces.find(af_it->first);
+            if(planes.find(oaf_it->second.face) != planes.end()) { //外相邻面是平面
+                outsideAdjacentFaces1.emplace_back(af_it);
+            }
+        }
+        if(outsideAdjacentFaces1.size() == 2) { //对于第0个侧面，符合条件的外相邻面有两个，验证四个侧面分别共同相邻于这两个外相邻面
+            outsideAdjacentFaces2.emplace_back(outsideAdjacentFaces1[1]);
+            outsideAdjacentFaces1.erase(outsideAdjacentFaces1.begin() + 1);
+            //先验证第一个公共外相邻面
+            for(int i = 1; i < 4; i++)
+            {
+                bool found = false;
+                for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //验证剩下3个面是否相邻于这个外相邻面
+                {
+                    if(af_it->first != outsideAdjacentFaces1[0]->first) continue; //第i个面的外相邻面与第0个面的第一个外相邻面是同一个面
+                    if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                    if(af_it->second.concavity != 1) continue; //凸
+                    if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                    outsideAdjacentFaces1.emplace_back(af_it);
+                    found = true;
+                    break;
+                }
+                if(found == false) break; //第i个面中未找到与第0个面第一个外相邻面相同的外相邻面
+            }
+            //第一个外相邻面的四条外相邻直线边属于并组成一个边环
+            if(outsideAdjacentFaces1.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces1)) outside_typical1 = true; //第一个外相邻面条件符合外部标准
+
+            //再验证第二个公共外相邻面
+            for(int i = 1; i < 4; i++)
+            {
+                bool found = false;
+                for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //验证剩下3个面是否相邻于这个外相邻面
+                {
+                    if(af_it->first != outsideAdjacentFaces2[0]->first) continue; //第i个面的外相邻面与第0个面的第二个外相邻面是同一个面
+                    if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                    if(af_it->second.concavity != 1) continue; //凸
+                    if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                    outsideAdjacentFaces2.emplace_back(af_it);
+                    found = true;
+                    break;
+                }
+                if(found == false) break; //第i个面中未找到与第0个面第二个外相邻面相同的外相邻面
+            }
+            //第二个外相邻面的四条外相邻直线边属于并组成一个边环
+            if(outsideAdjacentFaces2.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces2)) outside_typical2 = true; //第二个外相邻面条件符合外部标准
+
+            if(outside_typical2 == true && outside_typical1 == false) { //第二个外相邻面符合外部标准，第一个外相邻面不符合外部标准，交换两个外相邻面
+                swap(outsideAdjacentFaces1, outsideAdjacentFaces2);
+                swap(outside_typical1, outside_typical2);
+            }
+        }
+        else if(outsideAdjacentFaces1.size() > 2) { //对于第0个侧面，符合条件的外相邻面多于两个，验证四个侧面分别共同相邻于其中的两个外相邻面
+            int num = outsideAdjacentFaces1.size(); //第0个侧面的外相邻面个数
+            swap(outsideAdjacentFaces1, outsideAdjacentFaces2); //将备选的公共外相邻面放入outsideAdjacentFaces2中备用
+
+            //找第一个公共外相邻面
+            while(outside_typical1 != true && num > 0) {
+                outsideAdjacentFaces1.emplace_back(outsideAdjacentFaces2[num - 1]);
+                outsideAdjacentFaces2.erase(outsideAdjacentFaces2.begin() + num - 1);
+                num--;
+                
+                for(int i = 1; i < 4; i++)
+                {
+                    bool found = false;
+                    for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //验证剩下3个面是否相邻于这个外相邻面
+                    {
+                        if(af_it->first != outsideAdjacentFaces1[0]->first) continue; //第i个面的外相邻面与第0个面的这个外相邻面是同一个面
+                        if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                        if(af_it->second.concavity != 1) continue; //凸
+                        if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                        outsideAdjacentFaces1.emplace_back(af_it);
+                        found = true;
+                        break;
+                    }
+                    if(found == false) break; //第i个面中未找到与第0个面的这个外相邻面相同的外相邻面
+                }
+                //四条外相邻直线边属于并组成一个边环
+                if(outsideAdjacentFaces1.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces1)) outside_typical1 = true; //此外相邻面条件符合外部标准
+                else outsideAdjacentFaces1.clear();
+            }
+            
+            while(outside_typical2 != true && num > 0) { //找到了第一个符合条件的外相邻面，继续找第二个符合条件的外相邻面
+                vector<map<int, CommonEdge>::iterator> outsideAdjacentFaces3; //临时外相邻面存储器
+                outsideAdjacentFaces3.emplace_back(outsideAdjacentFaces2[num - 1]);
+                outsideAdjacentFaces2.erase(outsideAdjacentFaces2.begin() + num - 1);
+                num--;
+
+                for(int i = 1; i < 4; i++)
+                {
+                    bool found = false;
+                    for(auto af_it = faces[i]->second.adjacentFaces.begin(); af_it != faces[i]->second.adjacentFaces.end(); af_it++) //验证剩下3个面是否相邻于这个外相邻面
+                    {
+                        if(af_it->first != outsideAdjacentFaces3[0]->first) continue; //第i个面的外相邻面与第0个面的这个外相邻面是同一个面
+                        if(!anglesAreEqual(af_it->second.angle, (3*PI/2))) continue; //夹角为270度
+                        if(af_it->second.concavity != 1) continue; //凸
+                        if(af_it->second.edgeType != "LINE") continue; //直线公共边
+                        outsideAdjacentFaces3.emplace_back(af_it);
+                        found = true;
+                        break;
+                    }
+                    if(found == false) break; //第i个面中未找到与第0个面的这个外相邻面相同的外相邻面
+                }
+                //四条外相邻直线边属于并组成一个边环
+                if(outsideAdjacentFaces3.size() == 4 && formAnEdgeLoop(outsideAdjacentFaces3)) { //此外相邻面条件符合外部标准
+                    outside_typical2 = true;
+                    outsideAdjacentFaces2 = outsideAdjacentFaces3;
+                }
+            }
+        }
+
+        //计算几何参数
+        double depth; //方孔深度
+        double length; //方孔长度
+        double width; //方孔宽度
+        if(outside_typical1 == true && outside_typical2 == true) { //若确定为双平面外部标准方孔，可计算方孔深度
+            auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧面公共边的边曲线索引
+            depth = sideEdge_it->second.length(); //方孔的深度
+            auto outsideEdge_it1 = edge_curves.find(outsideAdjacentFaces1[0]->second.index); //方孔公共外相邻面的两个相邻边界
+            auto outsideEdge_it2 = edge_curves.find(outsideAdjacentFaces1[2]->second.index);
+            length = outsideEdge_it1->second.length(); //方孔长度
+            width = outsideEdge_it2->second.length(); //方孔宽度
+            if(length < width) swap(length, width);
+        }
+        else if(outside_typical1 == true && outside_typical2 == false) { //单平面外部标准方孔，不可计算方孔深度
+            auto outsideEdge_it1 = edge_curves.find(outsideAdjacentFaces1[0]->second.index); //方孔公共外相邻面的两个相邻边界
+            auto outsideEdge_it2 = edge_curves.find(outsideAdjacentFaces1[2]->second.index);
+            length = outsideEdge_it1->second.length(); //方孔长度
+            width = outsideEdge_it2->second.length(); //方孔宽度
+            if(length < width) swap(length, width);
+        }
+        else { //外部非标准方孔，不可计算方孔深度
+            auto ec_it_0_2 = edge_curves.find(sideCommonEdges[0]->index); //第0面与第2面公共边的边曲线
+            auto ec_it_0_3 = edge_curves.find(sideCommonEdges[1]->index); //第0面与第3面公共边的边曲线
+            auto ec_it_1_2 = edge_curves.find(sideCommonEdges[2]->index); //第1面与第2面公共边的边曲线
+            auto vp_it_0_2 = vertex_points.find(ec_it_0_2->second.vertex1); //第0面与第2面公共边上的一个顶点
+            auto vp_it_0_3 = vertex_points.find(ec_it_0_3->second.vertex1); //第0面与第3面公共边上的一个顶点
+            auto vp_it_1_2 = vertex_points.find(ec_it_1_2->second.vertex1); //第1面与第2面公共边上的一个顶点
+            auto cp_it_0_2 = cartesian_points.find(vp_it_0_2->second.point); //第0面与第2面公共边上的一个坐标点
+            auto cp_it_0_3 = cartesian_points.find(vp_it_0_3->second.point); //第0面与第3面公共边上的一个坐标点
+            auto cp_it_1_2 = cartesian_points.find(vp_it_1_2->second.point); //第1面与第2面公共边上的一个坐标点
+            Point p_0_2 = cp_it_0_2->second.toPoint(); //第0面与第2面公共边上的一个坐标点
+            Point p_0_3 = cp_it_0_3->second.toPoint(); //第0面与第3面公共边上的一个坐标点
+            Point p_1_2 = cp_it_1_2->second.toPoint(); //第1面与第2面公共边上的一个坐标点
+            Vector v_0_2 = sideCommonEdges[0]->getVector(); //第0面与第2面公共边的方向向量
+
+            Point footOfPerpendicular1 = GetFootOfPerpendicular(p_0_3, p_0_2, v_0_2); //第0面与第3面公共边上的一个坐标点在第0面与第2面公共边上的垂足
+            Point footOfPerpendicular2 = GetFootOfPerpendicular(p_1_2, p_0_2, v_0_2); //第1面与第2面公共边上的一个坐标点在第0面与第2面公共边上的垂足
+            length = distance_AB(footOfPerpendicular1, p_0_3); //方孔长度
+            width = distance_AB(footOfPerpendicular2, p_1_2); //方孔宽度
+            if(length < width) swap(length, width);
+
+            // //测试
+            // auto ec_it_1_3 = edge_curves.find(sideCommonEdges[3]->index); //第1面与第3面公共边的边曲线
+            // auto vp_it_1_3 = vertex_points.find(ec_it_1_3->second.vertex1); //第1面与第3面公共边上的一个顶点
+            // auto cp_it_1_3 = cartesian_points.find(vp_it_1_3->second.point); //第1面与第3面公共边上的一个坐标点
+            // Point p_1_3 = cp_it_1_3->second.toPoint(); //第1面与第3面公共边上的一个坐标点
+            // Vector v_1_3 = sideCommonEdges[3]->getVector(); //第1面与第3面公共边的方向向量
+            // Point footOfPerpendicular3 = GetFootOfPerpendicular(p_1_2, p_1_3, v_1_3); //第1面与第2面公共边上的一个坐标点在第1面与第3面公共边上的垂足
+            // Point footOfPerpendicular4 = GetFootOfPerpendicular(p_0_3, p_1_3, v_1_3); //第0面与第3面公共边上的一个坐标点在第1面与第3面公共边上的垂足
+            // double length1 = distance_AB(footOfPerpendicular3, p_1_2); //方孔长度
+            // double width1 = distance_AB(footOfPerpendicular4, p_0_3); //方孔宽度
+            // if(length1 < width1) swap(length1, width1);
+            // cout << "length1 = " << length1 << ", width1 = " << width1 << endl;
+        }
+
+        //判定完毕，输出
+        cout << endl << "方孔Square Closed pocket ";
+        if(inside_typical == true) cout << "内部标准Typical inside ";
+        else cout << "内部非标准Not typical inside ";
+        if(outside_typical1 == true && outside_typical2 == true) cout << "双平面外部标准Typical outside: ";
+        
+        else if(outside_typical1 == true && outside_typical2 == false) cout << "单平面外部标准Typical outside: ";
+        else cout << "外部非标准Not typical outside: ";
+        if(outside_typical1 == true && outside_typical2 == true) { //双平面外部标准方孔，输出方孔深度、长度、宽度
+            cout << "深度depth = " << depth << ", ";
+            cout << "长度length = " << length << ", 宽度width = " << width;
+        }
+        else if(outside_typical1 == true && outside_typical2 == false) { //单平面外部标准方孔，输出长度、宽度
+            cout << "长度length = " << length << ", 宽度width = " << width;
+        }
+        else { //外部非标准方孔，输出长度、宽度
+            cout << "长度length = " << length << ", 宽度width = " << width;
+        }
+        cout << " | 四个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << endl;
+
+        //屏蔽关键面
+        for(int i = 0; i < 4; i++)
+        {
+            faces[i]->second.setUse(1);
+        }
     }
 }
 
 void hexagonalHole()
 {
-
+    
 }

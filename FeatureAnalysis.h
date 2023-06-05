@@ -1,6 +1,5 @@
 #pragma once
 
-#include <math.h>
 #include "StpDataStructure.h"
 
 //计算两点之间距离

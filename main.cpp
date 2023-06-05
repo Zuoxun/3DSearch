@@ -2,6 +2,7 @@
 #include "LexAnalysis.cpp"
 #include "FeatureAnalysis.h"
 #include "FeatureAnalysis.cpp"
+#include <fstream>
 
 void test()
 {
@@ -63,6 +64,12 @@ void face_use_visit()
 
 int main()
 {
+    // freopen("couttest.txt", "w", stdout);
+
+    // cout  ‰≥ˆÃ·ÀŸ
+    ios::sync_with_stdio(false);
+    cout.tie(NULL);
+    
     string filepath;
     while(getline(cin, filepath))
     {
@@ -77,6 +84,7 @@ int main()
             setUse(0);
             closedPocket();
             hexagonalClosedPocket();
+            squareHole();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
         //test();
