@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <math.h>
+#include <algorithm>
 using namespace std;
 
 #define PI acos(-1)  //π
