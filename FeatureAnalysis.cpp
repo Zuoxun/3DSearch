@@ -1585,95 +1585,95 @@ void hexagonalHole()
                     outsideAdjacentFaces2 = outsideAdjacentFaces3;
                 }
             }
+        }
 
-            //计算几何参数
-            double depth; //六角孔深度
-            vector<double> length; //六角孔边长
+        //计算几何参数
+        double depth; //六角孔深度
+        vector<double> length; //六角孔边长
 
-            auto ec_it_0_1 = edge_curves.find(sideCommonEdges[0]->index); //第0面与第1面公共边的边曲线
-            auto ec_it_1_2 = edge_curves.find(sideCommonEdges[1]->index); //第1面与第2面公共边的边曲线
-            auto ec_it_2_3 = edge_curves.find(sideCommonEdges[2]->index); //第2面与第3面公共边的边曲线
-            auto ec_it_3_4 = edge_curves.find(sideCommonEdges[3]->index); //第3面与第4面公共边的边曲线
-            auto ec_it_4_5 = edge_curves.find(sideCommonEdges[4]->index); //第4面与第5面公共边的边曲线
-            auto ec_it_5_0 = edge_curves.find(sideCommonEdges[5]->index); //第5面与第0面公共边的边曲线
-            auto vp_it_0_1 = vertex_points.find(ec_it_0_1->second.vertex1); //第0面与第1面公共边上的一个顶点
-            auto vp_it_1_2 = vertex_points.find(ec_it_1_2->second.vertex1); //第1面与第2面公共边上的一个顶点
-            auto vp_it_2_3 = vertex_points.find(ec_it_2_3->second.vertex1); //第2面与第3面公共边上的一个顶点
-            auto vp_it_3_4 = vertex_points.find(ec_it_3_4->second.vertex1); //第3面与第4面公共边上的一个顶点
-            auto vp_it_4_5 = vertex_points.find(ec_it_4_5->second.vertex1); //第4面与第5面公共边上的一个顶点
-            auto vp_it_5_0 = vertex_points.find(ec_it_5_0->second.vertex1); //第5面与第0面公共边上的一个顶点
-            auto cp_it_0_1 = cartesian_points.find(vp_it_0_1->second.point); //第0面与第1面公共边上的一个坐标点
-            auto cp_it_1_2 = cartesian_points.find(vp_it_1_2->second.point); //第1面与第2面公共边上的一个坐标点
-            auto cp_it_2_3 = cartesian_points.find(vp_it_2_3->second.point); //第2面与第3面公共边上的一个坐标点
-            auto cp_it_3_4 = cartesian_points.find(vp_it_3_4->second.point); //第3面与第4面公共边上的一个坐标点
-            auto cp_it_4_5 = cartesian_points.find(vp_it_4_5->second.point); //第4面与第5面公共边上的一个坐标点
-            auto cp_it_5_0 = cartesian_points.find(vp_it_5_0->second.point); //第5面与第0面公共边上的一个坐标点
-            Point p_0_1 = cp_it_0_1->second.toPoint(); //第0面与第1面公共边上的一个坐标点
-            Point p_1_2 = cp_it_1_2->second.toPoint(); //第1面与第2面公共边上的一个坐标点
-            Point p_2_3 = cp_it_2_3->second.toPoint(); //第2面与第3面公共边上的一个坐标点
-            Point p_3_4 = cp_it_3_4->second.toPoint(); //第3面与第4面公共边上的一个坐标点
-            Point p_4_5 = cp_it_4_5->second.toPoint(); //第4面与第5面公共边上的一个坐标点
-            Point p_5_0 = cp_it_5_0->second.toPoint(); //第5面与第0面公共边上的一个坐标点
-            Vector v_0_1 = sideCommonEdges[0]->getVector(); //第0面与第1面公共边的方向向量
-            Vector v_1_2 = sideCommonEdges[1]->getVector(); //第1面与第2面公共边的方向向量
-            Vector v_2_3 = sideCommonEdges[2]->getVector(); //第2面与第3面公共边的方向向量
-            Vector v_3_4 = sideCommonEdges[3]->getVector(); //第3面与第4面公共边的方向向量
-            Vector v_4_5 = sideCommonEdges[4]->getVector(); //第4面与第5面公共边的方向向量
-            Vector v_5_0 = sideCommonEdges[5]->getVector(); //第5面与第0面公共边的方向向量
+        auto ec_it_0_1 = edge_curves.find(sideCommonEdges[0]->index); //第0面与第1面公共边的边曲线
+        auto ec_it_1_2 = edge_curves.find(sideCommonEdges[1]->index); //第1面与第2面公共边的边曲线
+        auto ec_it_2_3 = edge_curves.find(sideCommonEdges[2]->index); //第2面与第3面公共边的边曲线
+        auto ec_it_3_4 = edge_curves.find(sideCommonEdges[3]->index); //第3面与第4面公共边的边曲线
+        auto ec_it_4_5 = edge_curves.find(sideCommonEdges[4]->index); //第4面与第5面公共边的边曲线
+        auto ec_it_5_0 = edge_curves.find(sideCommonEdges[5]->index); //第5面与第0面公共边的边曲线
+        auto vp_it_0_1 = vertex_points.find(ec_it_0_1->second.vertex1); //第0面与第1面公共边上的一个顶点
+        auto vp_it_1_2 = vertex_points.find(ec_it_1_2->second.vertex1); //第1面与第2面公共边上的一个顶点
+        auto vp_it_2_3 = vertex_points.find(ec_it_2_3->second.vertex1); //第2面与第3面公共边上的一个顶点
+        auto vp_it_3_4 = vertex_points.find(ec_it_3_4->second.vertex1); //第3面与第4面公共边上的一个顶点
+        auto vp_it_4_5 = vertex_points.find(ec_it_4_5->second.vertex1); //第4面与第5面公共边上的一个顶点
+        auto vp_it_5_0 = vertex_points.find(ec_it_5_0->second.vertex1); //第5面与第0面公共边上的一个顶点
+        auto cp_it_0_1 = cartesian_points.find(vp_it_0_1->second.point); //第0面与第1面公共边上的一个坐标点
+        auto cp_it_1_2 = cartesian_points.find(vp_it_1_2->second.point); //第1面与第2面公共边上的一个坐标点
+        auto cp_it_2_3 = cartesian_points.find(vp_it_2_3->second.point); //第2面与第3面公共边上的一个坐标点
+        auto cp_it_3_4 = cartesian_points.find(vp_it_3_4->second.point); //第3面与第4面公共边上的一个坐标点
+        auto cp_it_4_5 = cartesian_points.find(vp_it_4_5->second.point); //第4面与第5面公共边上的一个坐标点
+        auto cp_it_5_0 = cartesian_points.find(vp_it_5_0->second.point); //第5面与第0面公共边上的一个坐标点
+        Point p_0_1 = cp_it_0_1->second.toPoint(); //第0面与第1面公共边上的一个坐标点
+        Point p_1_2 = cp_it_1_2->second.toPoint(); //第1面与第2面公共边上的一个坐标点
+        Point p_2_3 = cp_it_2_3->second.toPoint(); //第2面与第3面公共边上的一个坐标点
+        Point p_3_4 = cp_it_3_4->second.toPoint(); //第3面与第4面公共边上的一个坐标点
+        Point p_4_5 = cp_it_4_5->second.toPoint(); //第4面与第5面公共边上的一个坐标点
+        Point p_5_0 = cp_it_5_0->second.toPoint(); //第5面与第0面公共边上的一个坐标点
+        Vector v_0_1 = sideCommonEdges[0]->getVector(); //第0面与第1面公共边的方向向量
+        Vector v_1_2 = sideCommonEdges[1]->getVector(); //第1面与第2面公共边的方向向量
+        Vector v_2_3 = sideCommonEdges[2]->getVector(); //第2面与第3面公共边的方向向量
+        Vector v_3_4 = sideCommonEdges[3]->getVector(); //第3面与第4面公共边的方向向量
+        Vector v_4_5 = sideCommonEdges[4]->getVector(); //第4面与第5面公共边的方向向量
+        Vector v_5_0 = sideCommonEdges[5]->getVector(); //第5面与第0面公共边的方向向量
 
-            Point footOfPerpendicular1 = GetFootOfPerpendicular(p_1_2, p_0_1, v_0_1); //第1面与第2面公共边上的一个坐标点在第0面与第1面公共边上的垂足
-            Point footOfPerpendicular2 = GetFootOfPerpendicular(p_2_3, p_1_2, v_1_2); //第2面与第3面公共边上的一个坐标点在第1面与第2面公共边上的垂足
-            Point footOfPerpendicular3 = GetFootOfPerpendicular(p_3_4, p_2_3, v_2_3); //第3面与第4面公共边上的一个坐标点在第2面与第3面公共边上的垂足
-            Point footOfPerpendicular4 = GetFootOfPerpendicular(p_4_5, p_3_4, v_3_4); //第4面与第5面公共边上的一个坐标点在第3面与第4面公共边上的垂足
-            Point footOfPerpendicular5 = GetFootOfPerpendicular(p_5_0, p_4_5, v_4_5); //第5面与第0面公共边上的一个坐标点在第4面与第5面公共边上的垂足
-            Point footOfPerpendicular6 = GetFootOfPerpendicular(p_0_1, p_5_0, v_5_0); //第0面与第1面公共边上的一个坐标点在第5面与第0面公共边上的垂足
-            length.emplace_back(distance_AB(footOfPerpendicular1, p_1_2)); //第1面的边长
-            length.emplace_back(distance_AB(footOfPerpendicular2, p_2_3)); //第2面的边长
-            length.emplace_back(distance_AB(footOfPerpendicular3, p_3_4)); //第3面的边长
-            length.emplace_back(distance_AB(footOfPerpendicular4, p_4_5)); //第4面的边长
-            length.emplace_back(distance_AB(footOfPerpendicular5, p_5_0)); //第5面的边长
-            length.emplace_back(distance_AB(footOfPerpendicular6, p_0_1)); //第0面的边长
-            sort(length.begin(), length.end()); //将边长从小到大排序
-            bool isRegular = true; //是不是正六角孔
-            for(int i = 1; i < 6; i++)
-            {
-                if(!isEqual(length[i], length[0])) isRegular = false; //边长不相等，不是正六角孔
-            }
-            
-            if(outside_typical1 == true && outside_typical2 == true) { //双平面外部标准六角孔，可以计算六角孔深度
-                auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧面公共边的边曲线索引
-                depth = sideEdge_it->second.length(); //六角孔深度
-            }
+        Point footOfPerpendicular1 = GetFootOfPerpendicular(p_1_2, p_0_1, v_0_1); //第1面与第2面公共边上的一个坐标点在第0面与第1面公共边上的垂足
+        Point footOfPerpendicular2 = GetFootOfPerpendicular(p_2_3, p_1_2, v_1_2); //第2面与第3面公共边上的一个坐标点在第1面与第2面公共边上的垂足
+        Point footOfPerpendicular3 = GetFootOfPerpendicular(p_3_4, p_2_3, v_2_3); //第3面与第4面公共边上的一个坐标点在第2面与第3面公共边上的垂足
+        Point footOfPerpendicular4 = GetFootOfPerpendicular(p_4_5, p_3_4, v_3_4); //第4面与第5面公共边上的一个坐标点在第3面与第4面公共边上的垂足
+        Point footOfPerpendicular5 = GetFootOfPerpendicular(p_5_0, p_4_5, v_4_5); //第5面与第0面公共边上的一个坐标点在第4面与第5面公共边上的垂足
+        Point footOfPerpendicular6 = GetFootOfPerpendicular(p_0_1, p_5_0, v_5_0); //第0面与第1面公共边上的一个坐标点在第5面与第0面公共边上的垂足
+        length.emplace_back(distance_AB(footOfPerpendicular1, p_1_2)); //第1面的边长
+        length.emplace_back(distance_AB(footOfPerpendicular2, p_2_3)); //第2面的边长
+        length.emplace_back(distance_AB(footOfPerpendicular3, p_3_4)); //第3面的边长
+        length.emplace_back(distance_AB(footOfPerpendicular4, p_4_5)); //第4面的边长
+        length.emplace_back(distance_AB(footOfPerpendicular5, p_5_0)); //第5面的边长
+        length.emplace_back(distance_AB(footOfPerpendicular6, p_0_1)); //第0面的边长
+        sort(length.begin(), length.end()); //将边长从小到大排序
+        bool isRegular = true; //是不是正六角孔
+        for(int i = 1; i < 6; i++)
+        {
+            if(!isEqual(length[i], length[0])) isRegular = false; //边长不相等，不是正六角孔
+        }
+        
+        if(outside_typical1 == true && outside_typical2 == true) { //双平面外部标准六角孔，可以计算六角孔深度
+            auto sideEdge_it = edge_curves.find(sideCommonEdges[0]->index); //侧面公共边的边曲线索引
+            depth = sideEdge_it->second.length(); //六角孔深度
+        }
 
-            //判定完毕，输出
-            if(isRegular == true) cout << endl << "正六角孔Regular Hexagonal hole ";
-            else cout << endl << "六角孔Hexagonal hole ";
-            if(inside_typical == true) cout << "内部标准Typical inside ";
-            else cout << "内部非标准Not typical inside ";
-            if(outside_typical1 == true && outside_typical2 == true) cout << "双平面外部标准Double Typical outside: ";
-            else if(outside_typical1 == true && outside_typical2 == false) cout << "单平面外部标准Single Typical outside: ";
-            else cout << "外部非标准Not typical outside: ";
-            if(outside_typical1 == true && outside_typical2 == true) { //双平面外部标准六角孔，输出六角孔深度
-                cout << "深度depth = " << depth << ", ";
-            }
-            if(isRegular == true) { //正六角孔，输出六角孔边长
-                cout << "边长length = " << length[0];
-            }
-            else { //非正六角孔，输出六角孔边长
-                cout << "边长length = ";
-                for(int i = 0; i < 6; i++)
-                {
-                    cout << length[i];
-                    if(i != 5) cout << ", ";
-                }
-            }
-            cout << " | 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
-
-            //屏蔽关键面
+        //判定完毕，输出
+        if(isRegular == true) cout << endl << "正六角孔Regular Hexagonal hole ";
+        else cout << endl << "六角孔Hexagonal hole ";
+        if(inside_typical == true) cout << "内部标准Typical inside ";
+        else cout << "内部非标准Not typical inside ";
+        if(outside_typical1 == true && outside_typical2 == true) cout << "双平面外部标准Double Typical outside: ";
+        else if(outside_typical1 == true && outside_typical2 == false) cout << "单平面外部标准Single Typical outside: ";
+        else cout << "外部非标准Not typical outside: ";
+        if(outside_typical1 == true && outside_typical2 == true) { //双平面外部标准六角孔，输出六角孔深度
+            cout << "深度depth = " << depth << ", ";
+        }
+        if(isRegular == true) { //正六角孔，输出六角孔边长
+            cout << "边长length = " << length[0];
+        }
+        else { //非正六角孔，输出六角孔边长
+            cout << "边长length = ";
             for(int i = 0; i < 6; i++)
             {
-                faces[i]->second.setUse(1);
+                cout << length[i];
+                if(i != 5) cout << ", ";
             }
+        }
+        cout << " | 六个侧面#" << faces[0]->first << ' ' << faces[1]->first << ' ' << faces[2]->first << ' ' << faces[3]->first << ' ' << faces[4]->first << ' ' << faces[5]->first << endl;
+
+        //屏蔽关键面
+        for(int i = 0; i < 6; i++)
+        {
+            faces[i]->second.setUse(1);
         }
     }
 }
