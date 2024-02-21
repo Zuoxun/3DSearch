@@ -181,9 +181,13 @@ public:
     Vector getDirectionZ(); //获取Z轴向量
     int concaveCommonEdge_number(); //获取凹公共边个数
     int concaveCommonLineEdge_number(); //获取凹公共直线边个数
+    int convexCommonLineEdge_number(); //获取凸公共直线边个数
+    int notConvexCommonLineEdge_number(); //获取非凸公共直线边个数
+    int concaveCommonCircleEdge_number(); //获取凹公共圆曲线边个数
     vector<map<int, CommonEdge>::iterator> get_concaveAdjacentFaces(); //获取所有凹相邻面的迭代器
     bool get_4concaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces); //尝试找到一个尺寸最大的由4个凹公共直线边组成的闭环边界（比较边长），返回这四个凹相邻面的迭代器
     bool get_6concaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces); //尝试找到一个尺寸最大的由6个同样长度的凹公共直线边组成的闭环边界（比较边长），返回这六个凹相邻面的迭代器
+    bool get_2Line2CircleConcaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces); //尝试找到一个尺寸最大的由2个凹公共直线边和2个凹公共圆边组成的闭环边界（比较边长），返回这两个凹直线相邻面+两个凹圆边相邻面的迭代器
     int commonEdge_number_withFace(int faceIndex); //获取与一个高级面的公共边数量
     CommonEdge* getCommonEdge_withAdjacentFace(int faceIndex); //获取与一个相邻面的公共边指针
 };

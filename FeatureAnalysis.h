@@ -61,5 +61,22 @@ void openPocket();
 //提取通槽
 void throughSlot();
 
+//六棱柱（螺母）
+void hexagonalPrism();
+
 //提取封闭键槽
 void keySlots();
+
+/*获得2个直线边侧相邻面与2个圆边侧相邻面互相间的公共直线边指针
+
+说明：1.验证平面的两个凹直线边相邻面与两个凹圆边相邻面是否符合：键槽的四个凹相邻面两两之间有且仅有一个公共直线边，且柱面与平面交替相邻的相邻特征。
+    2.存储的四个凹相邻面的顺序为：第0个、第1个为一对不相邻的对位平面，第2个、第3个为一对不相邻的对位柱面。
+    3.返回四个公共直线边指针（顺序为：第0个、第2个相邻面之间的公共直线边，第0个、第3个相邻面之间…，第1个、第2个相邻面之间…，第1个、第3个相邻面之间…）
+*/
+bool keySlot_getSideCommonEdges(const vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces, const vector<map<int, ADVANCED_FACE>::iterator> &faces, vector<CommonEdge*> &sideCommonEdges);
+
+//提取开放键槽
+void openKeySlot();
+
+//提取U形通槽
+void UshapedSlot();

@@ -272,6 +272,36 @@ int ADVANCED_FACE::concaveCommonLineEdge_number()
     }
     return num;
 }
+//获取凸公共直线边个数
+int ADVANCED_FACE::convexCommonLineEdge_number()
+{
+    int num = 0;
+    for(auto it = adjacentFaces.begin(); it != adjacentFaces.end(); it++)
+    {
+        if(it->second.concavity == 1 && it->second.edgeType == "LINE") num++;
+    }
+    return num;
+}
+//获取非凸公共直线边个数
+int ADVANCED_FACE::notConvexCommonLineEdge_number()
+{
+    int num = 0;
+    for(auto it = adjacentFaces.begin(); it != adjacentFaces.end(); it++)
+    {
+        if(it->second.concavity != 1 && it->second.edgeType == "LINE") num++;
+    }
+    return num;
+}
+//获取凹公共圆曲线边个数
+int ADVANCED_FACE::concaveCommonCircleEdge_number()
+{
+    int num = 0;
+    for(auto it = adjacentFaces.begin(); it != adjacentFaces.end(); it++)
+    {
+        if(it->second.concavity == 0 && it->second.edgeType == "CIRCLE") num++;
+    }
+    return num;
+}
 //获取所有凹相邻面的迭代器
 vector<map<int, CommonEdge>::iterator> ADVANCED_FACE::get_concaveAdjacentFaces()
 {
@@ -399,6 +429,71 @@ bool ADVANCED_FACE::get_6concaveAdjacentFaces_closedLoopOutside(vector<map<int, 
         if(temp_len > maxlen && allEqual) {
             concaveAdjacentFaces = temp;
             maxlen = temp_len;
+        }
+    }
+
+    if(maxlen > 0) return true; //找到了符合条件的闭合边界
+}
+//尝试找到一个尺寸最大的由2个凹公共直线边和2个凹公共圆边组成的闭环边界（比较边长），返回这两个凹直线相邻面+两个凹圆边相邻面的迭代器
+bool ADVANCED_FACE::get_2Line2CircleConcaveAdjacentFaces_closedLoopOutside(vector<map<int, CommonEdge>::iterator> &concaveAdjacentFaces)
+{
+    double maxlen = 0; //闭环边界中最长直线边的长度
+    for(int i = 0; i < bounds.size(); i++)
+    {
+        vector<map<int, CommonEdge>::iterator> tempLine; //该闭合边界包含的凹公共直线边/凹相邻面
+        vector<map<int, CommonEdge>::iterator> tempCircle; //该闭合边界包含的凹公共圆形边/凹相邻面
+        vector<int> Edges; //边界包含的所有边曲线的索引号
+        auto fob_it = face_outer_bounds.find(bounds[i]);
+        auto fb_it = face_bounds.find(bounds[i]);
+        if(fob_it != face_outer_bounds.end()) Edges = fob_it->second.getAllEdges();
+        else Edges = fb_it->second.getAllEdges();
+
+        if(Edges.size() != 4) continue; //该闭环边界必须由4个边曲线组成
+
+        //这4个边必须是凹公共直线边或凹公共圆形边
+        bool f = true;
+        for(int j = 0; j < Edges.size(); j++)
+        {
+            bool ff = false;
+            for(auto it = adjacentFaces.begin(); it != adjacentFaces.end(); it++)
+            {
+                if(Edges[j] == it->second.index && it->second.concavity == 0 && it->second.edgeType == "LINE") {
+                    ff = true;
+                    tempLine.emplace_back(it);
+                    break;
+                }
+                else if(Edges[j] == it->second.index && it->second.concavity == 0 && it->second.edgeType == "CIRCLE") {
+                    ff = true;
+                    tempCircle.emplace_back(it);
+                    break;
+                }
+            }
+            if(ff == false) {
+                f = false;
+                break;
+            }
+        }
+        if(f == false) continue;
+        if(tempLine.size() != 2 || tempCircle.size() != 2) continue; //该闭环边界必须由2个凹公共直线边和2个凹公共圆边组成
+
+        //比较选择尺寸最大的闭环边界
+        double temp_maxlen = 0;
+        for(int k = 0; k < tempLine.size(); k++)
+        {
+            auto ec_it = edge_curves.find(tempLine[k]->second.index);
+            auto vp_it1 = vertex_points.find(ec_it->second.vertex1);
+            auto vp_it2 = vertex_points.find(ec_it->second.vertex2);
+            auto cp_it1 = cartesian_points.find(vp_it1->second.point);
+            auto cp_it2 = cartesian_points.find(vp_it2->second.point);
+            Point P1 = cp_it1->second.toPoint();
+            Point P2 = cp_it2->second.toPoint();
+            double len = distance_AB(P1, P2);
+            temp_maxlen = max(temp_maxlen, len);
+        }
+        if(temp_maxlen > maxlen) {
+            concaveAdjacentFaces = tempLine;
+            concaveAdjacentFaces.insert(concaveAdjacentFaces.end(), tempCircle.begin(), tempCircle.end());
+            maxlen = temp_maxlen;
         }
     }
 

@@ -86,6 +86,11 @@ int main()
             hexagonalClosedPocket();
             squareHole();
             hexagonalHole();
+            hexagonalPrism();
+            throughSlot();
+            keySlots();
+            openKeySlot();
+            UshapedSlot();
         }
         else cout << "ReadSTPtoCPP failed!" << endl;
         //test();
