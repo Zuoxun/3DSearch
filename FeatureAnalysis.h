@@ -16,6 +16,9 @@ void makeAAG();
 //提取圆柱和圆孔
 void cylinder_and_circularHole();
 
+//提取圆环槽
+void annularSlot();
+
 //提取圆锥、圆锥孔、圆台、圆台孔
 void cone_and_conicalHole();
 
